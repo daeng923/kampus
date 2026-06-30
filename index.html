@@ -18,21 +18,44 @@
             margin: 0; 
         }
         @media screen {
-            body { background-color: #e5e7eb; }
+            body { background-color: #e5e7eb; overflow-x: hidden; }
+
+            /* Bingkai pembungkus tiap halaman: menampung versi halaman yang
+               diperkecil (scale) di layar sempit/HP, tanpa mengubah ukuran
+               asli halaman (yang dipakai saat cetak). */
+            .page-frame {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                overflow: hidden;
+                margin: 1.5rem auto;
+            }
+
             .page-paper {
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                margin-top: 2rem;
-                margin-bottom: 2rem;
+                transform-origin: top center;
+                flex-shrink: 0;
             }
         }
         @media print {
             body { background-color: #ffffff; font-size: 12pt; }
             .no-print { display: none !important; }
+
+            /* Pastikan saat cetak, bingkai & skala layar di-nonaktifkan
+               sehingga ukuran fisik halaman tetap presisi F4. */
+            .page-frame {
+                display: block !important;
+                width: auto !important;
+                height: auto !important;
+                overflow: visible !important;
+                margin: 0 !important;
+            }
             .page-paper {
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
                 margin: 0 !important;
+                transform: none !important;
             }
             .page-break { page-break-before: always; }
         }
@@ -85,12 +108,12 @@
 
     <!-- NAVIGATION & CONTROL BAR -->
     <div class="no-print w-full bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-md" style="font-family: ui-sans-serif, system-ui, sans-serif;">
-        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
             <div class="text-center md:text-left">
-                <h1 class="font-bold text-lg tracking-wide">Generator Surat Tugas UMM</h1>
+                <h1 class="font-bold text-base md:text-lg tracking-wide">Generator Surat Tugas UMM</h1>
                 <p class="text-xs text-slate-400">Format Kertas: F4 | Manual Pagination (Page 3)</p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center justify-center gap-3">
                 <span class="text-xs text-emerald-400 bg-emerald-950/50 border border-emerald-800 px-3 py-1.5 rounded-full flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live
                 </span>
@@ -225,9 +248,48 @@
             return `${dateObj.getDate()} ${namaBulan[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
         }
 
+        /* =========================================================
+           RESPONSIVE PREVIEW (LAYAR/HP) — TIDAK MEMPENGARUHI HASIL CETAK
+           Halaman F4 berukuran tetap 215.9mm x 330.2mm (= 816 x 1248 px
+           pada referensi 96dpi standar CSS, sama persis di semua perangkat).
+           Di layar sempit (HP/tablet), halaman ini diperkecil tampilannya
+           saja (CSS transform: scale) agar pas tanpa scroll horizontal.
+           Saat tombol "Cetak" ditekan, aturan @media print mengembalikan
+           transform ke "none" sehingga ukuran fisik cetak tetap presisi F4.
+        ========================================================= */
+        const PAGE_WIDTH_PX = 816;   // 215.9mm pada 96dpi
+        const PAGE_HEIGHT_PX = 1248; // 330.2mm pada 96dpi
+
+        function wrapPageFrames() {
+            document.querySelectorAll(".page-paper").forEach(page => {
+                if (page.parentElement.classList.contains("page-frame")) return;
+                const frame = document.createElement("div");
+                frame.className = "page-frame";
+                page.parentNode.insertBefore(frame, page);
+                frame.appendChild(page);
+            });
+        }
+
+        function applyResponsiveScale() {
+            const horizontalGap = window.innerWidth < 480 ? 16 : 32;
+            const available = window.innerWidth - horizontalGap;
+            const scale = Math.min(1, available / PAGE_WIDTH_PX);
+
+            document.querySelectorAll(".page-paper").forEach(page => {
+                page.style.transform = `scale(${scale})`;
+            });
+            document.querySelectorAll(".page-frame").forEach(frame => {
+                frame.style.height = (PAGE_HEIGHT_PX * scale) + "px";
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
+            wrapPageFrames();
+            applyResponsiveScale();
             fetchDataFromSheet(GAS_API_URL);
         });
+        window.addEventListener("resize", applyResponsiveScale);
+        window.addEventListener("orientationchange", applyResponsiveScale);
 
         async function fetchDataFromSheet(url) {
             const loader = document.getElementById("loader");
@@ -409,6 +471,9 @@
                 pageLampiran1.classList.add("block");
                 pageLampiran2.classList.remove("hidden");
                 pageLampiran2.classList.add("block");
+
+                // Pastikan skala terbaru diterapkan setelah halaman tampil
+                applyResponsiveScale();
 
             } catch (error) {
                 console.error(error);
