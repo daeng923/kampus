@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Cetak Surat Tugas UMM - F4 Manual Split</title>
+    <!-- Tailwind CSS Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Memaksa penggunaan font Times New Roman secara global */
+        body {
+            font-family: "Times New Roman", Times, serif !important;
+        }
+
+        /* Pengaturan Layout Kertas Cetak Folio (F4) */
+        @page {
+            size: 215.9mm 330.2mm;
+            margin: 0; 
+        }
+        @media screen {
+            body { background-color: #e5e7eb; }
+            .page-paper {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                margin-top: 2rem;
+                margin-bottom: 2rem;
+            }
+        }
+        @media print {
+            body { background-color: #ffffff; font-size: 12pt; }
+            .no-print { display: none !important; }
+            .page-paper {
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+            }
+            .page-break { page-break-before: always; }
+        }
+        
+        .page-paper {
+            width: 215.9mm;
+            height: 330.2mm; 
+            position: relative;
+            background-color: white; 
+            box-sizing: border-box;
+            overflow: hidden; 
+            z-index: 0;
+            page-break-after: always;
+        }
+
+        /* Watermark Halaman Depan */
+        .bg-watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            z-index: -1;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Watermark Lampiran: Gambar ukuran asli 100%, TIDAK digeser ke atas.
+           Hanya bagian atasnya saja (16%) yang dibuat tak terlihat (dicrop in-place)
+           agar footer di bawah tetap di posisi aslinya.
+        */
+        .watermark-lampiran {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            z-index: -1;
+            clip-path: inset(16% 0 0 0); /* Memotong 16% gambar dari atas */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    </style>
+</head>
+<body class="text-black antialiased">
+
+    <!-- NAVIGATION & CONTROL BAR -->
+    <div class="no-print w-full bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-md" style="font-family: ui-sans-serif, system-ui, sans-serif;">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-center md:text-left">
+                <h1 class="font-bold text-lg tracking-wide">Generator Surat Tugas UMM</h1>
+                <p class="text-xs text-slate-400">Format Kertas: F4 | Manual Pagination (Page 3)</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-emerald-400 bg-emerald-950/50 border border-emerald-800 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live
+                </span>
+                <button onclick="window.print()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded transition shadow cursor-pointer">
+                    Cetak Dokumen (F4)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="flex flex-col items-center justify-center min-h-screen p-0 md:p-6">
+        
+        <!-- LOADER STATUS -->
+        <div id="loader" class="no-print text-slate-600 bg-white px-8 py-6 rounded-xl shadow-sm border text-center my-12 max-w-sm" style="font-family: ui-sans-serif, system-ui, sans-serif;">
+            <p class="font-bold animate-pulse text-blue-600 text-md">Sinkronisasi Basis Data...</p>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- HALAMAN 1: BAGIAN DEPAN (SURAT TUGAS FORM)     -->
+        <!-- ============================================== -->
+        <div id="page-depan" class="page-paper hidden mx-auto relative page-break">
+            <img src="https://lh3.googleusercontent.com/d/1qOTIpvS7rgIgDkMPuj1IErlmcefb6xyv" class="bg-watermark" alt="Kop Surat">
+            
+            <div class="absolute top-[20px] left-0 w-full text-center z-20 pl-[60px]">
+                <p class="font-bold text-[14pt] text-gray-600 uppercase tracking-wide">UNIVERSITAS MUHAMMADIYAH MALANG</p>
+            </div>
+            
+            <div class="relative z-10 px-16 pt-[7.5rem] pb-16">
+                <div class="mt-2 text-center mb-8">
+                    <h2 class="text-xl font-bold uppercase tracking-wider underline">SURAT TUGAS</h2>
+                    <p class="text-[11.5pt] mt-1">Nomor : <span id="fd-nomor-surat">...</span></p>
+                </div>
+
+                <table class="w-full border-collapse text-[11.5pt] leading-relaxed">
+                    <tbody id="dynamic-tugas-body"></tbody>
+                </table>
+
+                <div class="flex justify-end mt-16 text-[11.5pt]">
+                    <div class="w-[350px] text-left pl-4">
+                        <p>Malang, <span id="fd-tgl-surat">...</span></p>
+                        <p id="fd-an-rektor"></p>
+                        <p class="font-bold mb-24" id="fd-jabatan-ttd">...</p>
+                        <p class="font-bold underline whitespace-nowrap" id="fd-nama-rektor">...</p>
+                    </div>
+                </div>
+
+                <div class="mt-12 text-sm text-gray-800">
+                    <p class="font-bold">Tembusan Yth. :</p>
+                    <ol class="list-decimal pl-4 mt-0.5" id="fd-tembusan-list"></ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- HALAMAN 2: LAMPIRAN AWAL                       -->
+        <!-- ============================================== -->
+        <div id="page-lampiran-1" class="page-paper hidden mx-auto relative page-break">
+            <img src="https://lh3.googleusercontent.com/d/1qOTIpvS7rgIgDkMPuj1IErlmcefb6xyv" class="watermark-lampiran" alt="Watermark Lampiran">
+            
+            <div class="relative z-10 px-16 pt-[3.5rem] pb-16 h-full flex flex-col box-border">
+                
+                <!-- Header Lampiran -->
+                <div class="mt-2 mb-8 text-[11.5pt] leading-relaxed">
+                    <table class="w-full">
+                        <tr>
+                            <td class="w-[280px] whitespace-nowrap align-top">Lampiran Surat Tugas Nomor</td>
+                            <td class="w-4 align-top">:</td>
+                            <td class="font-sans" id="lb-nomor-surat">...</td>
+                        </tr>
+                        <tr>
+                            <td class="align-top">Tanggal</td>
+                            <td class="align-top">:</td>
+                            <td id="lb-tgl-surat">...</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Judul Lampiran Rata Tengah -->
+                <div class="text-center my-6">
+                    <h3 class="text-[12pt] font-bold uppercase tracking-wide" id="lb-judul-surat">...</h3>
+                    <p class="text-[11.5pt] mt-1" id="lb-keterangan-lampiran"></p>
+                </div>
+
+                <!-- Daftar Nama Panitia (Akan diisi sampai sebelum Konsumsi) -->
+                <div id="container-list-panitia-1" class="flex flex-col gap-1 text-[11.5pt] mt-4 flex-1">
+                    <!-- Data panitia Part 1 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- HALAMAN 3: LAMPIRAN LANJUTAN (KONSUMSI DST)    -->
+        <!-- ============================================== -->
+        <div id="page-lampiran-2" class="page-paper hidden mx-auto relative page-break">
+            <img src="https://lh3.googleusercontent.com/d/1qOTIpvS7rgIgDkMPuj1IErlmcefb6xyv" class="watermark-lampiran" alt="Watermark Lampiran">
+            
+            <div class="relative z-10 px-16 pt-[4rem] pb-[160px] h-full flex flex-col box-border">
+                
+                <!-- Daftar Nama Panitia Lanjutan (Konsumsi dst) -->
+                <!-- Menghapus flex-1 agar tinggi div ini mengikuti isi konten (tidak meregang ke bawah) -->
+                <div id="container-list-panitia-2" class="flex flex-col gap-1 text-[11.5pt]">
+                    <div class="w-full font-bold mt-2 mb-4 text-[11.5pt] italic text-gray-500">
+                        (Lanjutan Struktur Organisasi...)
+                    </div>
+                    <!-- Data panitia Part 2 -->
+                </div>
+
+                <!-- TTD Lampiran (Fix di Page 3) -->
+                <!-- mt-16 agar jarak TTD dekat dengan teks terakhir -->
+                <div class="mt-16 flex justify-end text-[11.5pt] w-full">
+                    <div class="w-[350px] text-left pl-4">
+                        <p id="lb-an-rektor"></p>
+                        <p class="font-bold mb-24" id="lb-jabatan-ttd">...</p>
+                        <p class="font-bold underline whitespace-nowrap" id="lb-nama-rektor">...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ENGINE API FETCH JS -->
+    <script>
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBkOHt3Sx-fx9W7bvrwK4xTzRL0MLkJcMJxgznpyIOMJgCazzvIjrOqvwG4CHi4STN/exec";
+
+        function formatTanggalIndo(dateStr) {
+            if (!dateStr) return "-";
+            const dateObj = new Date(dateStr);
+            if (isNaN(dateObj.getTime())) return dateStr;
+            const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            return `${dateObj.getDate()} ${namaBulan[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchDataFromSheet(GAS_API_URL);
+        });
+
+        async function fetchDataFromSheet(url) {
+            const loader = document.getElementById("loader");
+            const pageDepan = document.getElementById("page-depan");
+            const pageLampiran1 = document.getElementById("page-lampiran-1");
+            const pageLampiran2 = document.getElementById("page-lampiran-2");
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.error) { alert("Error Response: " + result.error); return; }
+
+                const safeGet = (key) => result.config[key] || "";
+                
+                // Variabel Data Umum
+                const jabatanTTDRaw = safeGet("Jabatan TTD").trim();
+                const teksAnRektor = (jabatanTTDRaw.toLowerCase() === "rektor" || jabatanTTDRaw.toLowerCase() === "rektor,") ? "" : "a.n. Rektor,";
+                let jabatanTTDFormatted = jabatanTTDRaw || "-";
+                if (jabatanTTDFormatted !== "-" && !jabatanTTDFormatted.endsWith(",")) jabatanTTDFormatted += ",";
+                const namaRektor = safeGet("Nama Rektor") || "-";
+                const nomorSurat = safeGet("Nomor Surat") || "-";
+                const tglSuratFormatted = formatTanggalIndo(safeGet("Tanggal Surat"));
+
+                /* =========================================
+                   1. RENDER HALAMAN 1 (DEPAN)
+                   ========================================= */
+                document.getElementById("fd-nomor-surat").innerText = nomorSurat;
+                document.getElementById("fd-tgl-surat").innerText = tglSuratFormatted;
+                document.getElementById("fd-an-rektor").innerText = teksAnRektor;
+                document.getElementById("fd-jabatan-ttd").innerText = jabatanTTDFormatted; 
+                document.getElementById("fd-nama-rektor").innerText = namaRektor;
+
+                const tbodyTugas = document.getElementById("dynamic-tugas-body");
+                tbodyTugas.innerHTML = ""; 
+                const templateFields = [
+                    { key: "Pejabat Pemberi Tugas", label: "Pejabat yang memberi tugas" },
+                    { key: "SPECIAL_NAMA", label: "Nama yang diberi tugas" },
+                    { key: "Jabatan yang Diberi Tugas", label: "Jabatan yang diberi tugas" },
+                    { key: "Alamat / Kedudukan", label: "Alamat / Kedudukan" },
+                    { key: "Uraian Tugas", label: "Yang bersangkutan diberi tugas" },
+                    { key: "SPECIAL_TANGGAL", label: "Tugas tersebut mulai pada tanggal" },
+                    { key: "Tugas Pokok", label: "Tugas Pokok" },
+                    { key: "Keterangan Lain", label: "Keterangan lain-lain" }
+                ];
+                const excludeKeys = ["Nomor Surat", "Judul Surat", "Tanggal Surat", "Nama Rektor", "Jabatan TTD", "Tugas Mulai", "Tugas Selesai", "Tembusan", "Judul Seksi", "Keterangan Lampiran"];
+                templateFields.forEach(f => excludeKeys.push(f.key)); 
+                const rowsToRender = [];
+                templateFields.forEach(field => {
+                    if (field.key === "SPECIAL_NAMA") rowsToRender.push({ label: field.label, val: `Terlampir` });
+                    else if (field.key === "SPECIAL_TANGGAL") {
+                        const tMulai = formatTanggalIndo(result.config["Tugas Mulai"]);
+                        const tSelesai = formatTanggalIndo(result.config["Tugas Selesai"]);
+                        if (result.config["Tugas Mulai"] && result.config["Tugas Selesai"]) rowsToRender.push({ label: field.label, val: `${tMulai} s/d ${tSelesai}` });
+                        else if (result.config["Tugas Mulai"]) rowsToRender.push({ label: field.label, val: tMulai });
+                    } 
+                    else {
+                        if (result.config[field.key]) {
+                            let isBold = (field.key === "Uraian Tugas") ? "font-semibold" : "";
+                            rowsToRender.push({ label: field.label, val: `<span class="${isBold}">${result.config[field.key]}</span>` });
+                        }
+                    }
+                });
+                for (let key in result.config) {
+                    if (!excludeKeys.includes(key) && result.config[key] !== "") rowsToRender.push({ label: key, val: result.config[key] });
+                }
+
+                let nomorUrut = 1;
+                rowsToRender.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.className = "align-top";
+                    tr.innerHTML = `<td class="w-[5%] py-2">${nomorUrut}.</td><td class="w-[32%] py-2 pr-2">${row.label}</td><td class="w-[3%] py-2">:</td><td class="py-2">${row.val}</td>`;
+                    tbodyTugas.appendChild(tr);
+                    nomorUrut++;
+                });
+
+                const listTembusan = document.getElementById("fd-tembusan-list");
+                listTembusan.innerHTML = "";
+                const tembusanData = safeGet("Tembusan");
+                if (tembusanData) {
+                    tembusanData.split(/\n|,/).map(item => item.trim()).filter(item => item !== "").forEach(item => {
+                        const li = document.createElement("li"); li.innerText = item; listTembusan.appendChild(li);
+                    });
+                } else {
+                    listTembusan.innerHTML = `<li>Rektor (sebagai laporan)</li><li>Yang Bersangkutan</li><li>Arsip</li>`;
+                }
+
+
+                /* =========================================
+                   2. RENDER HALAMAN 2 & 3 (MANUAL SPLIT KONSUMSI)
+                   ========================================= */
+                
+                // Inject Text TTD dan Header
+                document.getElementById("lb-nomor-surat").innerText = nomorSurat;
+                document.getElementById("lb-tgl-surat").innerText = tglSuratFormatted;
+                document.getElementById("lb-judul-surat").innerText = safeGet("Judul Surat") || "-";
+                document.getElementById("lb-keterangan-lampiran").innerText = safeGet("Keterangan Lampiran");
+                
+                document.getElementById("lb-an-rektor").innerText = teksAnRektor;
+                document.getElementById("lb-jabatan-ttd").innerText = jabatanTTDFormatted; 
+                document.getElementById("lb-nama-rektor").innerText = namaRektor;
+
+                const containerPart1 = document.getElementById("container-list-panitia-1");
+                const containerPart2 = document.getElementById("container-list-panitia-2");
+                containerPart1.innerHTML = "";
+                
+                // Grouping Data Panitia
+                const groupedPanitia = [];
+                result.panitia.forEach(person => {
+                    const lastGroup = groupedPanitia[groupedPanitia.length - 1];
+                    const currentJabatan = person.jabatanSeksi.trim().toLowerCase();
+                    const lastJabatan = lastGroup ? lastGroup.jabatanSeksi.trim().toLowerCase() : "";
+                    if (lastGroup && lastJabatan === currentJabatan && lastGroup.kategori === person.kategori) lastGroup.members.push(person);
+                    else groupedPanitia.push({ jabatanSeksi: person.jabatanSeksi.trim(), kategori: person.kategori, members: [person] });
+                });
+
+                let isSeksiStarted = false;
+                let charCodeAwal = 65; 
+                
+                // Target Penampung (Default ke Page 2/Part 1)
+                let currentContainer = containerPart1;
+
+                for (let group of groupedPanitia) {
+                    
+                    // SPLIT TRIGGER: Jika jabatan mengandung kata "Konsumsi", pindah ke Page 3
+                    if (group.jabatanSeksi.toLowerCase().includes("konsumsi")) {
+                        currentContainer = containerPart2;
+                    }
+
+                    // Render Judul Induk ("Koordinator Seksi:") di container yang aktif
+                    if (group.kategori.toLowerCase() === "seksi" && !isSeksiStarted) {
+                        isSeksiStarted = true;
+                        const headerJudul = document.createElement("div");
+                        headerJudul.className = "w-full font-bold mt-2 mb-2 text-[11.5pt]";
+                        headerJudul.innerText = safeGet("Judul Seksi") || "Koordinator Seksi:";
+                        currentContainer.appendChild(headerJudul);
+                    }
+
+                    let textJabatan = group.jabatanSeksi;
+                    if (group.kategori.toLowerCase() === "seksi") {
+                        textJabatan = `${String.fromCharCode(charCodeAwal)}. ${group.jabatanSeksi}`;
+                        charCodeAwal++;
+                    }
+
+                    let membersHtml = group.members.map((m, idx) => {
+                        let isKoord = (idx === 0 && group.kategori.toLowerCase() === "seksi" && group.members.length > 1) ? " (Koord.)" : "";
+                        let prefix = group.members.length > 1 ? `${idx + 1}. ` : "";
+                        let spacingClass = idx < group.members.length - 1 ? 'mb-1' : '';
+                        let unitTextRaw = m.namaUnit ? m.namaUnit.trim() : "";
+                        let unitDisplay = unitTextRaw !== "" ? `(${unitTextRaw})` : "";
+                        
+                        // Rasio kolom: 65% untuk Nama, 35% untuk Unit (ditambah pr-4) agar unit terdorong ke kanan
+                        return `
+                            <div class="flex w-full ${spacingClass}">
+                                <div class="w-[65%] pr-4 whitespace-nowrap">${prefix}${m.nama}${isKoord}</div>
+                                <div class="w-[35%] text-gray-800 whitespace-nowrap">${unitDisplay}</div>
+                            </div>
+                        `;
+                    }).join("");
+
+                    const row = document.createElement("div");
+                    row.className = "flex items-start w-full leading-snug mb-1.5 text-[11.5pt]";
+                    
+                    row.innerHTML = `
+                        <div class="w-[32%] py-0.5 pr-2 font-semibold">${textJabatan}</div>
+                        <div class="w-[3%] py-0.5 text-center">:</div>
+                        <div class="w-[65%] py-0.5 flex flex-col overflow-visible">
+                            ${membersHtml}
+                        </div>
+                    `;
+                    currentContainer.appendChild(row);
+                }
+
+                // Tampilkan semua setelah render selesai
+                loader.classList.add("hidden");
+                pageDepan.classList.remove("hidden");
+                pageDepan.classList.add("block");
+                pageLampiran1.classList.remove("hidden");
+                pageLampiran1.classList.add("block");
+                pageLampiran2.classList.remove("hidden");
+                pageLampiran2.classList.add("block");
+
+            } catch (error) {
+                console.error(error);
+                loader.innerHTML = `<p class="font-bold text-red-600">Sinkronisasi Gagal</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
