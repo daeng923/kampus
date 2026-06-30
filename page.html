@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Kepanitiaan — UMM</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-950:#0a1929; --navy-900:#0f2238; --navy-800:#16314e;
+    --gold-500:#c79a2b; --gold-400:#dab84a; --gold-100:#fbf3d9;
+    --slate-50:#f6f7f9; --slate-100:#eef0f3; --slate-200:#e3e6eb;
+    --ink-900:#16202c; --ink-600:#5a6776; --ink-400:#8b97a5;
+    --emerald-600:#0e8f6b; --emerald-50:#e8f7f1;
+    --rose-600:#c2410c; --rose-50:#fdf1ea;
+    --danger-600:#c0392b; --danger-50:#fbeae8;
+  }
+  *{font-family:'Inter',ui-sans-serif,system-ui,sans-serif;}
+  .font-display{font-family:'Outfit',ui-sans-serif,system-ui,sans-serif;}
+  body{background:var(--slate-50); color:var(--ink-900);}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#d3d8de;border-radius:99px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .nav-item{position:relative; color:#aebbca;}
+  .nav-item.active{color:#fff; background:var(--navy-800);}
+  .nav-item.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--gold-500);border-radius:0 3px 3px 0;}
+  .nav-item:hover:not(.active){background:rgba(255,255,255,.05); color:#fff;}
+
+  .stat-card{border-left:3px solid var(--gold-500); background:#fff;}
+  .stat-card .stat-num{font-family:'Outfit',sans-serif; font-weight:700; font-variant-numeric: tabular-nums;}
+
+  .btn-primary{background:var(--navy-900); color:#fff;}
+  .btn-primary:hover{background:var(--navy-800);}
+  .btn-gold{background:var(--gold-500); color:#1b1303;}
+  .btn-gold:hover{background:var(--gold-400);}
+
+  .field input, .field select, .field textarea{
+    border:1.5px solid var(--slate-200); transition:border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--navy-800); box-shadow:0 0 0 3px rgba(15,34,56,.08);
+  }
+  .field label{font-size:.78rem; font-weight:600; color:var(--ink-600); letter-spacing:.01em;}
+
+  th.sortable{cursor:pointer; user-select:none;}
+  th.sortable:hover{color:var(--navy-900);}
+  th.sortable .sort-icon{opacity:.35; transition:opacity .15s, transform .15s;}
+  th.sortable.sort-active .sort-icon{opacity:1; color:var(--gold-500);}
+
+  .loader{border:2.5px solid #f3f3f3;border-top:2.5px solid var(--navy-900);border-radius:50%;width:16px;height:16px;animation:spin .8s linear infinite;}
+  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+
+  .modal-panel{animation:popIn .16s cubic-bezier(.2,.8,.3,1.2);}
+  @keyframes popIn{from{opacity:0; transform:translateY(6px) scale(.98)}to{opacity:1; transform:translateY(0) scale(1)}}
+
+  .toast{animation:slideIn .2s ease-out;}
+  @keyframes slideIn{from{opacity:0; transform:translateX(16px)}to{opacity:1; transform:translateX(0)}}
+
+  .chip{transition:background .15s, transform .1s;}
+  .chip:hover{transform:translateY(-1px);}
+
+  .sie-card{background:#fff; border:1px solid var(--slate-200); transition:box-shadow .15s, border-color .15s;}
+  .sie-card:hover{box-shadow:0 4px 14px rgba(15,34,56,.07); border-color:#d7dde4;}
+  .sie-card .sie-icon-coord{background:var(--gold-100); color:#92700f;}
+  .member-row{transition:background-color .1s;}
+  .member-list{max-height:0; overflow:hidden; transition:max-height .2s ease;}
+  .member-list.open{max-height:400px;}
+  .toggle-caret{transition:transform .15s;}
+  .toggle-caret.open{transform:rotate(180deg);}
+
+  tbody tr{transition:background-color .1s;}
+
+  @media (prefers-reduced-motion: reduce){
+    .modal-panel,.toast,.loader,.chip{animation:none!important; transition:none!important;}
+  }
+</style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="w-full md:w-64 text-white flex flex-col shrink-0" style="background:var(--navy-950);">
+    <div class="p-6 border-b border-white/10">
+      <h1 class="font-display text-lg font-bold tracking-wide">PANEL ADMIN</h1>
+      <p class="text-xs mt-1" style="color:#7e8da0;">Sistem Surat Tugas &middot; UMM</p>
+    </div>
+    <nav class="p-3 flex flex-col gap-1 flex-1">
+      <button onclick="switchTab('panitia')" id="tab-panitia" class="nav-item active flex items-center gap-3 w-full pl-5 pr-3 py-2.5 rounded-md text-left text-sm font-semibold">
+        <i class="ph ph-users text-lg"></i> Data Panitia
+      </button>
+      <button onclick="switchTab('jobdes')" id="tab-jobdes" class="nav-item flex items-center gap-3 w-full pl-5 pr-3 py-2.5 rounded-md text-left text-sm font-semibold">
+        <i class="ph ph-list-checks text-lg"></i> Uraian Tugas
+      </button>
+    </nav>
+    <div class="p-4 border-t border-white/10">
+      <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
+        <i class="ph ph-printer"></i> Buka Hal. Cetak
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <header class="bg-white border-b px-8 py-4 flex justify-between items-center shrink-0">
+      <div>
+        <h2 class="font-display text-xl font-bold" id="page-title">Manajemen Data Panitia</h2>
+        <p class="text-xs text-gray-400 mt-0.5" id="page-sub">Kelola nama, jabatan, dan unit kerja panitia</p>
+      </div>
+      <div id="status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold hidden" style="background:var(--gold-100); color:#92700f;">
+        <div class="loader"></div> Menyinkronkan...
+      </div>
+    </header>
+
+    <!-- PANITIA VIEW -->
+    <div id="view-panitia" class="flex-1 px-8 py-6 overflow-y-auto block">
+
+      <!-- REKAP -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Panitia</p>
+          <p class="stat-num text-3xl mt-1" id="stat-total">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Pengurus Inti</p>
+          <p class="stat-num text-3xl mt-1" id="stat-utama">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Anggota Seksi</p>
+          <p class="stat-num text-3xl mt-1" id="stat-seksi">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jumlah Seksi</p>
+          <p class="stat-num text-3xl mt-1" id="stat-jumlahseksi">0</p>
+        </div>
+      </div>
+
+      <!-- REKAP PENGURUS INTI -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-display font-bold text-sm text-gray-700">Pengurus Inti</h3>
+          <span class="text-xs text-gray-400" id="inti-count-label"></span>
+        </div>
+        <div id="inti-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- REKAP PER SIE -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-display font-bold text-sm text-gray-700">Rekap per Sie</h3>
+          <span class="text-xs text-gray-400" id="sie-count-label"></span>
+        </div>
+        <div id="sie-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
+        <div class="flex flex-1 gap-2 max-w-xl">
+          <div class="relative flex-1">
+            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input id="search-panitia" type="text" placeholder="Cari nama, jabatan, atau unit..." oninput="debounce(()=>{filterPanitia(); renderPanitia();},150)" class="w-full pl-9 pr-3 py-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy-900)]/10 focus:border-[var(--navy-900)]">
+          </div>
+          <select id="filter-kategori" onchange="filterPanitia(); renderPanitia();" class="px-3 py-2 rounded-md border border-gray-200 text-sm bg-white">
+            <option value="">Semua Kategori</option>
+            <option value="Inti">Inti</option>
+            <option value="Seksi">Seksi</option>
+          </select>
+        </div>
+        <button onclick="openModalPanitia()" class="btn-primary px-4 py-2 rounded-md flex items-center gap-2 text-sm font-semibold shrink-0">
+          <i class="ph ph-plus-circle text-lg"></i> Tambah Panitia
+        </button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-gray-50 text-gray-500 border-b">
+            <tr>
+              <th class="p-3.5 font-semibold w-12 text-center">No</th>
+              <th class="p-3.5 font-semibold sortable" onclick="setSort('panitia','nama')">
+                <span class="flex items-center gap-1">Nama Panitia <i class="ph ph-caret-up-down sort-icon text-xs"></i></span>
+              </th>
+              <th class="p-3.5 font-semibold sortable" onclick="setSort('panitia','jabatanSeksi')">
+                <span class="flex items-center gap-1">Jabatan / Seksi <i class="ph ph-caret-up-down sort-icon text-xs"></i></span>
+              </th>
+              <th class="p-3.5 font-semibold">Unit Kerja</th>
+              <th class="p-3.5 font-semibold">Kategori</th>
+              <th class="p-3.5 font-semibold text-center w-24">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-panitia" class="divide-y"></tbody>
+        </table>
+      </div>
+      <p class="text-xs text-gray-400 mt-2" id="count-panitia"></p>
+    </div>
+
+    <!-- JOBDES VIEW -->
+    <div id="view-jobdes" class="flex-1 px-8 py-6 overflow-y-auto hidden">
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Jobdes</p>
+          <p class="stat-num text-3xl mt-1" id="stat-jobdes-total">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Seksi Tercakup</p>
+          <p class="stat-num text-3xl mt-1" id="stat-jobdes-covered">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4 col-span-2" style="border-left-color:var(--rose-600);">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Belum Ada Jobdes</p>
+          <p class="stat-num text-3xl mt-1" id="stat-jobdes-missing">0</p>
+        </div>
+      </div>
+
+      <div id="missing-banner" class="hidden mb-5 p-3.5 rounded-md flex flex-wrap items-center gap-2" style="background:var(--rose-50); border:1px solid #f3d9c8;">
+        <i class="ph ph-warning-circle text-base" style="color:var(--rose-600);"></i>
+        <span class="text-xs font-semibold mr-1" style="color:var(--rose-600);">Seksi tanpa jobdes — klik untuk isi:</span>
+        <div id="missing-chips" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
+        <div class="relative flex-1 max-w-xl">
+          <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input id="search-jobdes" type="text" placeholder="Cari jabatan, uraian, atau target..." oninput="debounce(()=>{filterJobdes(); renderJobdes();},150)" class="w-full pl-9 pr-3 py-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy-900)]/10 focus:border-[var(--navy-900)]">
+        </div>
+        <button onclick="openModalJobdes()" class="px-4 py-2 rounded-md flex items-center gap-2 text-sm font-semibold text-white shrink-0" style="background:var(--emerald-600);">
+          <i class="ph ph-plus-circle text-lg"></i> Tambah Jobdes
+        </button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-gray-50 text-gray-500 border-b">
+            <tr>
+              <th class="p-3.5 font-semibold w-12 text-center">No</th>
+              <th class="p-3.5 font-semibold w-[20%] sortable" onclick="setSort('jobdes','jabatan')">
+                <span class="flex items-center gap-1">Jabatan / Seksi <i class="ph ph-caret-up-down sort-icon text-xs"></i></span>
+              </th>
+              <th class="p-3.5 font-semibold w-[40%]">Uraian Tugas Pokok</th>
+              <th class="p-3.5 font-semibold w-[25%]">Output / Target</th>
+              <th class="p-3.5 font-semibold text-center w-24">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-jobdes" class="divide-y"></tbody>
+        </table>
+      </div>
+      <p class="text-xs text-gray-400 mt-2" id="count-jobdes"></p>
+    </div>
+  </main>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 items-end"></div>
+
+  <!-- MODAL PANITIA -->
+  <div id="modal-panitia" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+    <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="font-display font-bold text-base" id="modal-panitia-title">Tambah Panitia Baru</h3>
+        <button onclick="closeModal('modal-panitia')" class="text-gray-400 hover:text-gray-700 text-xl"><i class="ph ph-x"></i></button>
+      </div>
+      <form id="form-panitia" class="p-6 flex flex-col gap-4">
+        <input type="hidden" id="panitia-row" value="">
+        <div class="field">
+          <label class="block mb-1.5" for="panitia-nama">Nama Panitia *</label>
+          <input type="text" id="panitia-nama" required class="w-full p-2.5 rounded-md text-sm" placeholder="Ahmad, S.Pd.">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="panitia-jabatan">Jabatan / Seksi *</label>
+          <input type="text" id="panitia-jabatan" required list="list-jabatan" class="w-full p-2.5 rounded-md text-sm" placeholder="Konsumsi">
+          <datalist id="list-jabatan"></datalist>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="panitia-unit">ID Unit Kerja</label>
+          <input type="text" id="panitia-unit" list="list-unit" class="w-full p-2.5 rounded-md text-sm" placeholder="Kosongkan jika tidak ada">
+          <datalist id="list-unit"></datalist>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="panitia-kategori">Kategori *</label>
+          <select id="panitia-kategori" class="w-full p-2.5 rounded-md text-sm bg-white">
+            <option value="Seksi">Seksi (diurutkan abjad)</option>
+            <option value="Inti">Inti (Ketua, Penasehat, dsb)</option>
+          </select>
+        </div>
+        <div class="mt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-panitia')" class="px-4 py-2 rounded-md text-gray-600 text-sm font-medium hover:bg-gray-100">Batal</button>
+          <button type="submit" class="btn-primary px-4 py-2 rounded-md text-sm font-semibold">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL JOBDES -->
+  <div id="modal-jobdes" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+    <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="font-display font-bold text-base" id="modal-jobdes-title">Tambah Jobdes Baru</h3>
+        <button onclick="closeModal('modal-jobdes')" class="text-gray-400 hover:text-gray-700 text-xl"><i class="ph ph-x"></i></button>
+      </div>
+      <form id="form-jobdes" class="p-6 flex flex-col gap-4">
+        <input type="hidden" id="jobdes-row" value="">
+        <div class="field">
+          <label class="block mb-1.5" for="jobdes-jabatan">Jabatan / Seksi *</label>
+          <input type="text" id="jobdes-jabatan" required list="list-jabatan-2" class="w-full p-2.5 rounded-md text-sm" placeholder="Konsumsi">
+          <datalist id="list-jabatan-2"></datalist>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="jobdes-uraian">Uraian Tugas Pokok *</label>
+          <textarea id="jobdes-uraian" required rows="3" class="w-full p-2.5 rounded-md text-sm" placeholder="Jelaskan tugasnya..."></textarea>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="jobdes-target">Output / Target *</label>
+          <input type="text" id="jobdes-target" required class="w-full p-2.5 rounded-md text-sm" placeholder="Distribusi makanan lancar">
+        </div>
+        <div class="mt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-jobdes')" class="px-4 py-2 rounded-md text-gray-600 text-sm font-medium hover:bg-gray-100">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-md text-sm font-semibold text-white" style="background:var(--emerald-600);">Simpan Jobdes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRM DELETE MODAL -->
+  <div id="modal-confirm" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-[55] backdrop-blur-sm p-4">
+    <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+      <div class="p-6 text-center">
+        <div class="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background:var(--danger-50);">
+          <i class="ph ph-trash text-2xl" style="color:var(--danger-600);"></i>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">Hapus data ini?</h3>
+        <p class="text-sm text-gray-500" id="confirm-message">Data tidak dapat dikembalikan setelah dihapus.</p>
+      </div>
+      <div class="px-6 pb-6 flex justify-center gap-2">
+        <button onclick="resolveConfirm(false)" class="px-4 py-2 rounded-md text-gray-600 text-sm font-medium hover:bg-gray-100 border">Batal</button>
+        <button onclick="resolveConfirm(true)" class="px-4 py-2 rounded-md text-sm font-semibold text-white" style="background:var(--danger-600);">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ============================
+  // KONFIGURASI
+  // ============================
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyGwd-rYy-da-b3MgopTB6McRhZb3DHMyNvUUVJ5aygYrYh4TRYSNdc5Rfpywdse2ynrg/exec";
+
+  // ============================
+  // STATE
+  // ============================
+  let panitiaData = [], jobdesData = [];
+  let panitiaView = [], jobdesView = [];
+  let sortState = { panitia: { key: 'nama', dir: 1 }, jobdes: { key: null, dir: 1 } };
+  let debounceTimer = null;
+  let confirmResolver = null;
+
+  function debounce(fn, ms){ clearTimeout(debounceTimer); debounceTimer = setTimeout(fn, ms); }
+
+  // ============================
+  // UI: TABS / STATUS
+  // ============================
+  function switchTab(tab){
+    document.getElementById('view-panitia').classList.toggle('hidden', tab !== 'panitia');
+    document.getElementById('view-jobdes').classList.toggle('hidden', tab !== 'jobdes');
+    document.getElementById('tab-panitia').classList.toggle('active', tab === 'panitia');
+    document.getElementById('tab-jobdes').classList.toggle('active', tab === 'jobdes');
+    document.getElementById('page-title').innerText = tab === 'panitia' ? 'Manajemen Data Panitia' : 'Manajemen Uraian Tugas';
+    document.getElementById('page-sub').innerText = tab === 'panitia' ? 'Kelola nama, jabatan, dan unit kerja panitia' : 'Kelola rincian tugas dan target tiap jabatan/seksi';
+  }
+
+  function setStatus(isLoading){
+    document.getElementById('status-badge').classList.toggle('hidden', !isLoading);
+  }
+
+  function toast(message, type = 'success'){
+    const palette = {
+      success: { bg: '#0f2238', icon: 'ph-check-circle', iconColor: 'var(--gold-500)' },
+      error:   { bg: '#c0392b', icon: 'ph-warning-circle', iconColor: '#fff' },
+    }[type];
+    const el = document.createElement('div');
+    el.className = 'toast flex items-center gap-2 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-lg max-w-xs';
+    el.style.background = palette.bg;
+    el.innerHTML = `<i class="ph ${palette.icon} text-lg shrink-0" style="color:${palette.iconColor}"></i><span>${message}</span>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .25s'; setTimeout(()=>el.remove(), 250); }, 3200);
+  }
+
+  function confirmDelete(message){
+    document.getElementById('confirm-message').innerText = message;
+    openModal('modal-confirm');
+    return new Promise(resolve => { confirmResolver = resolve; });
+  }
+  function resolveConfirm(val){
+    closeModal('modal-confirm');
+    if(confirmResolver){ confirmResolver(val); confirmResolver = null; }
+  }
+
+  // ============================
+  // FETCH DATA
+  // ============================
+  async function loadData(){
+    setStatus(true);
+    try {
+      const res = await fetch(GAS_API_URL);
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if(data.error) throw new Error(data.error);
+
+      panitiaData = data.panitia || [];
+      jobdesData = data.jobdes || [];
+
+      populateDatalists();
+      filterPanitia(); renderPanitia(); renderStatsPanitia(); renderSieCards();
+      filterJobdes(); renderJobdes(); renderStatsJobdes();
+
+    } catch(e){
+      console.error("Gagal memuat data:", e);
+      toast("Gagal memuat data: " + e.message, 'error');
+    } finally {
+      setStatus(false);
+    }
+  }
+
+  function populateDatalists(){
+    const jabatanSet = [...new Set(panitiaData.map(p => p.jabatanSeksi).filter(Boolean))].sort();
+    const unitSet = [...new Set(panitiaData.map(p => p.idUnit).filter(Boolean))].sort();
+    for(const id of ['list-jabatan','list-jabatan-2']){
+      document.getElementById(id).innerHTML = jabatanSet.map(j => `<option value="${escapeAttr(j)}">`).join('');
+    }
+    document.getElementById('list-unit').innerHTML = unitSet.map(u => `<option value="${escapeAttr(u)}">`).join('');
+  }
+
+  // ============================
+  // REKAP / STATS
+  // ============================
+  function renderStatsPanitia(){
+    const total = panitiaData.length;
+    const utama = panitiaData.filter(p => p.kategori === 'Inti').length;
+    const seksi = panitiaData.filter(p => p.kategori === 'Seksi').length;
+    const jumlahSeksi = new Set(panitiaData.filter(p => p.kategori === 'Seksi').map(p => (p.jabatanSeksi||'').trim().toLowerCase())).size;
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-utama').innerText = utama;
+    document.getElementById('stat-seksi').innerText = seksi;
+    document.getElementById('stat-jumlahseksi').innerText = jumlahSeksi;
+  }
+
+  // ============================
+  // REKAP PER JABATAN (Inti & Sie)
+  // ============================
+  // Koordinator = anggota dengan urutan input paling awal pada jabatan tersebut
+  // (panitiaData sudah dalam urutan baris asli Sheet, jadi index awal = paling lama diinput).
+  function computeGroupsByKategori(kategori, sortAlpha){
+    const groups = {};
+    const order = [];
+    panitiaData.filter(p => p.kategori === kategori).forEach(p => {
+      const key = (p.jabatanSeksi || '(Tanpa Nama Jabatan)').trim();
+      if(!groups[key]){ groups[key] = []; order.push(key); }
+      groups[key].push(p);
+    });
+    let list = order.map(key => ({
+      jabatan: key,
+      koordinator: groups[key][0],
+      anggota: groups[key].slice(1)
+    }));
+    if(sortAlpha) list.sort((a,b) => a.jabatan.localeCompare(b.jabatan));
+    return list;
+  }
+
+  function renderSieCards(){
+    renderGroupCards('inti-cards', 'inti-count-label', computeGroupsByKategori('Inti', false), 'jabatan inti', 'inti');
+    renderGroupCards('sie-cards', 'sie-count-label', computeGroupsByKategori('Seksi', true), 'sie', 'sie');
+  }
+
+  function renderGroupCards(containerId, labelId, groups, unitLabel, prefix){
+    const container = document.getElementById(containerId);
+    document.getElementById(labelId).innerText = `${groups.length} ${unitLabel}`;
+
+    if(groups.length === 0){
+      container.innerHTML = `<p class="text-sm text-gray-400 col-span-full">Belum ada data untuk direkap.</p>`;
+      return;
+    }
+
+    container.innerHTML = groups.map((g, i) => sieCardHtml({ cardId: prefix + '-' + i, ...g })).join('');
+  }
+
+  function sieCardHtml({ cardId, jabatan, koordinator, anggota }){
+    const total = (koordinator ? 1 : 0) + anggota.length;
+    const visibleCount = 4;
+    const visible = anggota.slice(0, visibleCount);
+    const rest = anggota.slice(visibleCount);
+
+    const coordBlock = koordinator ? `
+      <div class="flex items-start gap-2.5 mt-3 pt-3 border-t border-gray-100">
+        <div class="sie-icon-coord w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+          <i class="ph ph-star text-sm"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Koordinator</p>
+          <button onclick="editPanitia('${encodeURIComponent(JSON.stringify(koordinator))}')" class="font-semibold text-sm text-left hover:underline truncate block w-full" style="color:var(--navy-900);">${escapeHtml(koordinator.nama)}</button>
+        </div>
+      </div>` : '';
+
+    const memberRows = (list) => list.map(p => `
+      <div class="member-row flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50">
+        <span class="text-sm text-gray-700 truncate">${escapeHtml(p.nama)}</span>
+        <button onclick="editPanitia('${encodeURIComponent(JSON.stringify(p))}')" class="text-gray-400 hover:text-[var(--navy-900)] shrink-0" title="Edit"><i class="ph ph-pencil-simple text-sm"></i></button>
+      </div>`).join('');
+
+    const restBlock = rest.length > 0 ? `
+      <div class="member-list" id="member-list-${cardId}">
+        <div class="pt-1">${memberRows(rest)}</div>
+      </div>
+      <button onclick="toggleMemberList('${cardId}')" id="toggle-btn-${cardId}" class="flex items-center gap-1 text-xs font-semibold mt-1.5 px-2.5" style="color:var(--navy-900);">
+        <span id="toggle-label-${cardId}">+${rest.length} anggota lainnya</span>
+        <i class="ph ph-caret-down toggle-caret text-xs" id="toggle-caret-${cardId}"></i>
+      </button>` : '';
+
+    return `
+      <div class="sie-card rounded-lg p-4">
+        <div class="flex items-start justify-between gap-2">
+          <h4 class="font-display font-bold text-sm leading-snug">${escapeHtml(jabatan)}</h4>
+          <span class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full" style="background:var(--slate-100); color:var(--ink-600);">${total} orang</span>
+        </div>
+        ${coordBlock}
+        ${visible.length > 0 ? `<div class="mt-2">${memberRows(visible)}</div>` : (koordinator ? '' : '<p class="text-xs text-gray-400 mt-3">Belum ada anggota.</p>')}
+        ${restBlock}
+      </div>`;
+  }
+
+  function toggleMemberList(cardId){
+    const list = document.getElementById('member-list-' + cardId);
+    const caret = document.getElementById('toggle-caret-' + cardId);
+    const label = document.getElementById('toggle-label-' + cardId);
+    const isOpen = list.classList.toggle('open');
+    caret.classList.toggle('open', isOpen);
+    const count = list.querySelectorAll('.member-row').length;
+    label.innerText = isOpen ? 'Sembunyikan' : `+${count} anggota lainnya`;
+  }
+
+
+
+  function getMissingJobdesList(){
+    const seksiSet = new Set(panitiaData.filter(p => p.kategori === 'Seksi').map(p => (p.jabatanSeksi||'').trim()));
+    const jobdesSet = new Set(jobdesData.map(j => (j.jabatan||'').trim().toLowerCase()));
+    return [...seksiSet].filter(s => s && !jobdesSet.has(s.toLowerCase())).sort();
+  }
+
+  function renderStatsJobdes(){
+    const total = jobdesData.length;
+    const covered = new Set(jobdesData.map(j => (j.jabatan||'').trim().toLowerCase())).size;
+    const missing = getMissingJobdesList();
+
+    document.getElementById('stat-jobdes-total').innerText = total;
+    document.getElementById('stat-jobdes-covered').innerText = covered;
+    document.getElementById('stat-jobdes-missing').innerText = missing.length;
+
+    const banner = document.getElementById('missing-banner');
+    const chips = document.getElementById('missing-chips');
+    if(missing.length === 0){
+      banner.classList.add('hidden');
+    } else {
+      banner.classList.remove('hidden');
+      chips.innerHTML = missing.map(m => `
+        <button onclick="quickAddJobdes('${escapeAttr(m)}')" class="chip text-xs font-semibold px-2.5 py-1 rounded-full" style="background:#fff; border:1px solid #f3d9c8; color:var(--rose-600);">
+          + ${escapeHtml(m)}
+        </button>`).join('');
+    }
+  }
+
+  function quickAddJobdes(jabatan){
+    switchTab('jobdes');
+    openModalJobdes();
+    document.getElementById('jobdes-jabatan').value = jabatan;
+    document.getElementById('jobdes-uraian').focus();
+  }
+
+  // ============================
+  // FILTER + SORT
+  // ============================
+  function filterPanitia(){
+    const q = (document.getElementById('search-panitia').value || '').toLowerCase().trim();
+    const kat = document.getElementById('filter-kategori').value;
+    panitiaView = panitiaData.filter(p => {
+      const matchQ = !q || [p.nama, p.jabatanSeksi, p.idUnit, p.namaUnit].some(v => (v||'').toLowerCase().includes(q));
+      const matchK = !kat || p.kategori === kat;
+      return matchQ && matchK;
+    });
+    applySort('panitia', panitiaView);
+  }
+
+  function filterJobdes(){
+    const q = (document.getElementById('search-jobdes').value || '').toLowerCase().trim();
+    jobdesView = jobdesData.filter(j => !q || [j.jabatan, j.uraian, j.target].some(v => (v||'').toLowerCase().includes(q)));
+    applySort('jobdes', jobdesView);
+  }
+
+  function setSort(table, key){
+    const s = sortState[table];
+    if(s.key === key){ s.dir *= -1; } else { s.key = key; s.dir = 1; }
+    if(table === 'panitia'){ applySort('panitia', panitiaView); renderPanitia(); }
+    else { applySort('jobdes', jobdesView); renderJobdes(); }
+    updateSortIcons();
+  }
+
+  function applySort(table, arr){
+    const s = sortState[table];
+    if(!s.key) return;
+    arr.sort((a,b) => (String(a[s.key]||'')).localeCompare(String(b[s.key]||'')) * s.dir);
+  }
+
+  function updateSortIcons(){
+    document.querySelectorAll('th.sortable').forEach(th => th.classList.remove('sort-active'));
+  }
+
+  // ============================
+  // RENDER TABLES
+  // ============================
+  function renderPanitia(){
+    const tbody = document.getElementById('tbody-panitia');
+    tbody.innerHTML = '';
+    document.getElementById('count-panitia').innerText = `Menampilkan ${panitiaView.length} dari ${panitiaData.length} panitia`;
+    if(panitiaView.length === 0){
+      tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400"><i class="ph ph-magnifying-glass text-2xl block mb-2"></i>Tidak ada data yang cocok.</td></tr>`;
+      return;
+    }
+    panitiaView.forEach((p, idx) => {
+      const pData = encodeURIComponent(JSON.stringify(p));
+      const isUtama = p.kategori === 'Inti';
+      tbody.innerHTML += `
+        <tr class="hover:bg-gray-50 group">
+          <td class="p-3.5 text-center text-gray-400">${idx + 1}</td>
+          <td class="p-3.5 font-medium text-gray-800">${escapeHtml(p.nama)}</td>
+          <td class="p-3.5">${escapeHtml(p.jabatanSeksi)}</td>
+          <td class="p-3.5 text-gray-500">${escapeHtml(p.idUnit) || '-'}</td>
+          <td class="p-3.5"><span class="px-2 py-1 text-xs rounded-full font-medium" style="background:${isUtama ? 'var(--gold-100)' : '#eef0f3'}; color:${isUtama ? '#92700f' : '#5a6776'};">${escapeHtml(p.kategori)}</span></td>
+          <td class="p-3.5 text-center">
+            <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="editPanitia('${pData}')" class="text-[var(--navy-900)] hover:bg-gray-100 p-1.5 rounded" title="Edit"><i class="ph ph-pencil-simple text-base"></i></button>
+              <button onclick="confirmDeletePanitia(${p.row}, '${escapeAttr(p.nama)}')" class="text-[var(--danger-600)] hover:bg-red-50 p-1.5 rounded" title="Hapus"><i class="ph ph-trash text-base"></i></button>
+            </div>
+          </td>
+        </tr>`;
+    });
+  }
+
+  function renderJobdes(){
+    const tbody = document.getElementById('tbody-jobdes');
+    tbody.innerHTML = '';
+    document.getElementById('count-jobdes').innerText = `Menampilkan ${jobdesView.length} dari ${jobdesData.length} jobdes`;
+    if(jobdesView.length === 0){
+      tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-400"><i class="ph ph-magnifying-glass text-2xl block mb-2"></i>Tidak ada data yang cocok.</td></tr>`;
+      return;
+    }
+    jobdesView.forEach((jd, idx) => {
+      const jdData = encodeURIComponent(JSON.stringify(jd));
+      tbody.innerHTML += `
+        <tr class="hover:bg-gray-50 group">
+          <td class="p-3.5 text-center text-gray-400 align-top">${idx + 1}</td>
+          <td class="p-3.5 font-semibold text-gray-800 align-top">${escapeHtml(jd.jabatan)}</td>
+          <td class="p-3.5 text-gray-600 align-top whitespace-pre-wrap">${escapeHtml(jd.uraian)}</td>
+          <td class="p-3.5 text-gray-600 align-top">${escapeHtml(jd.target)}</td>
+          <td class="p-3.5 text-center align-top">
+            <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="editJobdes('${jdData}')" class="hover:bg-gray-100 p-1.5 rounded" style="color:var(--emerald-600);" title="Edit"><i class="ph ph-pencil-simple text-base"></i></button>
+              <button onclick="confirmDeleteJobdes(${jd.row}, '${escapeAttr(jd.jabatan)}')" class="text-[var(--danger-600)] hover:bg-red-50 p-1.5 rounded" title="Hapus"><i class="ph ph-trash text-base"></i></button>
+            </div>
+          </td>
+        </tr>`;
+    });
+  }
+
+  // ============================
+  // CRUD
+  // ============================
+  async function sendApiRequest(action, dataObj){
+    setStatus(true);
+    try {
+      const response = await fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, data: dataObj })
+      });
+      const result = await response.json();
+      if(result.success){
+        toast(result.message || 'Berhasil disimpan');
+        await loadData();
+      } else {
+        toast(result.message || 'Gagal menyimpan data', 'error');
+      }
+    } catch(err){
+      console.error(err);
+      toast('Terjadi kesalahan jaringan: ' + err.message, 'error');
+    } finally {
+      setStatus(false);
+    }
+  }
+
+  async function confirmDeletePanitia(row, nama){
+    const ok = await confirmDelete(`Hapus panitia "${nama}"? Tindakan ini tidak dapat dibatalkan.`);
+    if(ok) await sendApiRequest('deletePanitia', { row });
+  }
+  async function confirmDeleteJobdes(row, jabatan){
+    const ok = await confirmDelete(`Hapus jobdes untuk "${jabatan}"? Tindakan ini tidak dapat dibatalkan.`);
+    if(ok) await sendApiRequest('deleteJobdes', { row });
+  }
+
+  // ============================
+  // MODAL
+  // ============================
+  function closeModal(id){ document.getElementById(id).classList.remove('flex'); document.getElementById(id).classList.add('hidden'); }
+  function openModal(id){ document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+
+  function openModalPanitia(){
+    document.getElementById("form-panitia").reset();
+    document.getElementById("panitia-row").value = "";
+    document.getElementById("modal-panitia-title").innerText = "Tambah Panitia Baru";
+    openModal('modal-panitia');
+    setTimeout(() => document.getElementById('panitia-nama').focus(), 50);
+  }
+
+  function editPanitia(encodedData){
+    const data = JSON.parse(decodeURIComponent(encodedData));
+    document.getElementById("panitia-row").value = data.row;
+    document.getElementById("panitia-nama").value = data.nama;
+    document.getElementById("panitia-jabatan").value = data.jabatanSeksi;
+    document.getElementById("panitia-unit").value = data.idUnit;
+    document.getElementById("panitia-kategori").value = data.kategori;
+    document.getElementById("modal-panitia-title").innerText = "Edit Data Panitia";
+    openModal('modal-panitia');
+    setTimeout(() => document.getElementById('panitia-nama').focus(), 50);
+  }
+
+  document.getElementById("form-panitia").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const row = document.getElementById("panitia-row").value;
+    const dataObj = {
+      row: row ? parseInt(row) : null,
+      nama: document.getElementById("panitia-nama").value.trim(),
+      jabatanSeksi: document.getElementById("panitia-jabatan").value.trim(),
+      idUnit: document.getElementById("panitia-unit").value.trim(),
+      kategori: document.getElementById("panitia-kategori").value
+    };
+    closeModal('modal-panitia');
+    await sendApiRequest(row ? "editPanitia" : "addPanitia", dataObj);
+  });
+
+  function openModalJobdes(){
+    document.getElementById("form-jobdes").reset();
+    document.getElementById("jobdes-row").value = "";
+    document.getElementById("modal-jobdes-title").innerText = "Tambah Jobdes Baru";
+    openModal('modal-jobdes');
+    setTimeout(() => document.getElementById('jobdes-jabatan').focus(), 50);
+  }
+
+  function editJobdes(encodedData){
+    const data = JSON.parse(decodeURIComponent(encodedData));
+    document.getElementById("jobdes-row").value = data.row;
+    document.getElementById("jobdes-jabatan").value = data.jabatan;
+    document.getElementById("jobdes-uraian").value = data.uraian;
+    document.getElementById("jobdes-target").value = data.target;
+    document.getElementById("modal-jobdes-title").innerText = "Edit Jobdes";
+    openModal('modal-jobdes');
+    setTimeout(() => document.getElementById('jobdes-jabatan').focus(), 50);
+  }
+
+  document.getElementById("form-jobdes").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const row = document.getElementById("jobdes-row").value;
+    const dataObj = {
+      row: row ? parseInt(row) : null,
+      jabatan: document.getElementById("jobdes-jabatan").value.trim(),
+      uraian: document.getElementById("jobdes-uraian").value.trim(),
+      target: document.getElementById("jobdes-target").value.trim()
+    };
+    closeModal('modal-jobdes');
+    await sendApiRequest(row ? "editJobdes" : "addJobdes", dataObj);
+  });
+
+  // Tutup modal dengan tombol Esc
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape'){
+      ['modal-panitia','modal-jobdes','modal-confirm'].forEach(id => {
+        const el = document.getElementById(id);
+        if(!el.classList.contains('hidden')) closeModal(id);
+      });
+    }
+  });
+
+  // ============================
+  // UTIL
+  // ============================
+  function escapeHtml(str){
+    if(str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escapeAttr(str){
+    if(str === null || str === undefined) return '';
+    return String(str).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+  }
+
+  window.onload = loadData;
+</script>
+</body>
+</html>
