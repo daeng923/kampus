@@ -444,6 +444,50 @@
     </div>
   </div>
 
+  <!-- MODAL EDIT LOMBA (WA Grup, PJ, dsb) -->
+  <div id="modal-edit-lomba" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+    <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="font-display font-bold text-base">Edit Lomba</h3>
+        <button onclick="closeModal('modal-edit-lomba')" class="text-gray-400 hover:text-gray-700 text-xl"><i class="ph ph-x"></i></button>
+      </div>
+      <form id="form-edit-lomba" class="p-6 flex flex-col gap-4 overflow-y-auto">
+        <input type="hidden" id="el-row" value="">
+        <div class="field">
+          <label class="block mb-1.5">Nama Lomba</label>
+          <input type="text" id="el-nama" required class="w-full p-2.5 rounded-md text-sm">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="el-jenis">Jenis</label>
+          <select id="el-jenis" class="w-full p-2.5 rounded-md text-sm bg-white">
+            <option value="Individu">Individu</option>
+            <option value="Kelompok">Kelompok</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="el-jumlah">Jumlah Peserta</label>
+          <input type="text" id="el-jumlah" class="w-full p-2.5 rounded-md text-sm" placeholder="mis. 6 orang / 1 tim">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="el-wa">WA Grup Lomba *</label>
+          <input type="url" id="el-wa" class="w-full p-2.5 rounded-md text-sm" placeholder="https://chat.whatsapp.com/...">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="el-pj">PJ Lomba *</label>
+          <input type="text" id="el-pj" required class="w-full p-2.5 rounded-md text-sm" placeholder="Nama penanggung jawab">
+        </div>
+        <div class="field flex items-center gap-2.5">
+          <input type="checkbox" id="el-lampiran" class="w-4 h-4">
+          <label for="el-lampiran" class="!mb-0 cursor-pointer">Butuh Lampiran (foto/dokumentasi Google Drive)</label>
+        </div>
+        <div class="mt-1 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-edit-lomba')" class="px-4 py-2 rounded-md text-gray-600 text-sm font-medium hover:bg-gray-100">Batal</button>
+          <button type="submit" class="btn-primary px-4 py-2 rounded-md text-sm font-semibold">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL LOMBA DAFTAR -->
   <div id="modal-lomba-daftar" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
     <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
@@ -860,12 +904,16 @@
       return `
         <div class="sie-card rounded-lg p-4">
           <div class="flex items-start justify-between gap-2">
-            <h4 class="font-display font-bold text-sm leading-snug">${escapeHtml(l.namaLomba)}</h4>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <h4 class="font-display font-bold text-sm leading-snug truncate">${escapeHtml(l.namaLomba)}</h4>
+              <button onclick="openModalEditLomba(${l.row})" class="shrink-0 text-gray-400 hover:text-[var(--navy-900)]" title="Edit Lomba (WA Grup, PJ, dsb)"><i class="ph ph-pencil-simple text-sm"></i></button>
+            </div>
             <span class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-[var(--ink-600)]">
               ${entries.length} entri
             </span>
           </div>
           <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(l.jenis)} &middot; kuota ${kuota ? kuota + ' org/entri' : '-'} &middot; PJ: ${escapeHtml(l.pj) || '-'}</p>
+          ${l.waGrup ? `<a href="${escapeAttr(l.waGrup)}" target="_blank" class="text-[11px] font-semibold flex items-center gap-1 mt-0.5" style="color:var(--emerald-600);"><i class="ph ph-whatsapp-logo"></i> Buka Grup WA</a>` : ''}
           ${entries.length > 0 ? visibleEntries.map((entry, i) => entryBlock(entry, i)).join('') : '<p class="text-xs text-gray-400 mt-3">Belum ada pendaftar.</p>'}
           ${restBlock}
           <button onclick="openModalLombaDaftar('${encodeURIComponent(l.namaLomba)}')" class="w-full mt-3 py-2 rounded-md border border-dashed text-xs font-semibold text-gray-500 hover:border-[var(--navy-900)] hover:text-[var(--navy-900)]">
@@ -874,6 +922,39 @@
         </div>`;
     }).join('');
   }
+
+  // ============================
+  // LOMBA: EDIT DATA LOMBA (WA Grup, PJ, dsb)
+  // ============================
+  function openModalEditLomba(row){
+    const l = lombaList.find(x => x.row === row);
+    if(!l) return;
+    document.getElementById('el-row').value = l.row;
+    document.getElementById('el-nama').value = l.namaLomba || '';
+    document.getElementById('el-jenis').value = l.jenis || 'Individu';
+    document.getElementById('el-jumlah').value = l.jumlahPeserta || '';
+    document.getElementById('el-wa').value = l.waGrup || '';
+    document.getElementById('el-pj').value = l.pj || '';
+    document.getElementById('el-lampiran').checked = !!l.butuhLampiran;
+    openModal('modal-edit-lomba');
+    setTimeout(() => document.getElementById('el-wa').focus(), 50);
+  }
+
+  document.getElementById('form-edit-lomba').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if(!requireToken()) return;
+    const dataObj = {
+      row: parseInt(document.getElementById('el-row').value),
+      namaLomba: document.getElementById('el-nama').value.trim(),
+      jenis: document.getElementById('el-jenis').value,
+      jumlahPeserta: document.getElementById('el-jumlah').value.trim(),
+      waGrup: document.getElementById('el-wa').value.trim(),
+      pj: document.getElementById('el-pj').value.trim(),
+      butuhLampiran: document.getElementById('el-lampiran').checked
+    };
+    closeModal('modal-edit-lomba');
+    await sendApiRequest('editLomba', dataObj, { url: LOMBA_API_URL, reload: loadLombaDaftar });
+  });
 
   // ============================
   // LOMBA: FILTER & TABLE
@@ -1457,7 +1538,7 @@
   // Tutup modal dengan tombol Esc
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape'){
-      ['modal-panitia','modal-jobdes','modal-confirm','modal-token','modal-jobdes-view','modal-lomba-daftar'].forEach(id => {
+      ['modal-panitia','modal-jobdes','modal-confirm','modal-token','modal-jobdes-view','modal-lomba-daftar','modal-edit-lomba'].forEach(id => {
         const el = document.getElementById(id);
         if(!el.classList.contains('hidden')) closeModal(id);
       });
