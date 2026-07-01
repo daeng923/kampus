@@ -94,13 +94,16 @@
       <button onclick="switchTab('jobdes')" id="tab-jobdes" class="nav-item flex items-center gap-3 w-full pl-5 pr-3 py-2.5 rounded-md text-left text-sm font-semibold">
         <i class="ph ph-list-checks text-lg"></i> Uraian Tugas
       </button>
+      <button onclick="switchTab('lomba')" id="tab-lomba" class="nav-item flex items-center gap-3 w-full pl-5 pr-3 py-2.5 rounded-md text-left text-sm font-semibold">
+        <i class="ph ph-trophy text-lg"></i> Pendaftaran Lomba
+      </button>
     </nav>
     <div class="p-4 border-t border-white/10 flex flex-col gap-2">
       <button onclick="openTokenModal()" id="token-status-btn" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
         <i class="ph ph-key text-sm" id="token-status-icon"></i> <span id="token-status-text">Atur Token Akses</span>
       </button>
       <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
-        <i class="ph ph-printer"></i> Generate S.Tugas
+        <i class="ph ph-printer"></i> Buka Hal. Cetak
       </a>
     </div>
   </aside>
@@ -123,13 +126,16 @@
         <button onclick="switchTab('jobdes'); closeMobileMenu();" id="tab-jobdes-m" class="nav-item flex items-center gap-3 w-full pl-5 pr-3 py-2.5 rounded-md text-left text-sm font-semibold">
           <i class="ph ph-list-checks text-lg"></i> Uraian Tugas
         </button>
+        <button onclick="switchTab('lomba'); closeMobileMenu();" id="tab-lomba-m" class="nav-item flex items-center gap-3 w-full pl-5 pr-3 py-2.5 rounded-md text-left text-sm font-semibold">
+          <i class="ph ph-trophy text-lg"></i> Pendaftaran Lomba
+        </button>
       </nav>
       <div class="p-4 border-t border-white/10 flex flex-col gap-2">
         <button onclick="closeMobileMenu(); openTokenModal();" id="token-status-btn-m" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
           <i class="ph ph-key text-sm" id="token-status-icon-m"></i> <span id="token-status-text-m">Atur Token Akses</span>
         </button>
         <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
-          <i class="ph ph-printer"></i> Generate S.Tugas
+          <i class="ph ph-printer"></i> Buka Hal. Cetak
         </a>
       </div>
     </aside>
@@ -289,6 +295,66 @@
       </div>
       <p class="text-xs text-gray-400 mt-2" id="count-jobdes"></p>
     </div>
+
+    <!-- LOMBA VIEW -->
+    <div id="view-lomba" class="flex-1 px-4 md:px-8 py-4 md:py-6 overflow-y-auto hidden">
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Pendaftar</p>
+          <p class="stat-num text-3xl mt-1" id="stat-lomba-total">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Jumlah Lomba</p>
+          <p class="stat-num text-3xl mt-1" id="stat-lomba-jumlah">0</p>
+        </div>
+        <div class="stat-card rounded-md p-4 col-span-2">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Lomba Kuota Penuh</p>
+          <p class="stat-num text-3xl mt-1" id="stat-lomba-penuh">0</p>
+        </div>
+      </div>
+
+      <!-- REKAP PER LOMBA -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-display font-bold text-sm text-gray-700">Rekap per Lomba</h3>
+          <span class="text-xs text-gray-400" id="lomba-count-label"></span>
+        </div>
+        <div id="lomba-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
+        <div class="relative flex-1 max-w-xl">
+          <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input id="search-lomba-daftar" type="text" placeholder="Cari nama peserta atau lomba..." oninput="debounce(()=>{filterLombaDaftar(); renderLombaDaftarTable();},150)" class="w-full pl-9 pr-3 py-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--navy-900)]/10 focus:border-[var(--navy-900)]">
+        </div>
+        <button onclick="openModalLombaDaftar()" class="btn-primary px-4 py-2 rounded-md flex items-center gap-2 text-sm font-semibold shrink-0">
+          <i class="ph ph-plus-circle text-lg"></i> Tambah Pendaftaran
+        </button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm min-w-[760px]">
+          <thead class="bg-gray-50 text-gray-500 border-b">
+            <tr>
+              <th class="p-3.5 font-semibold w-12 text-center">No</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">Lomba</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">Jenis</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">Nama Peserta</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">NIP</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">Peran</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">PJ Lomba</th>
+              <th class="p-3.5 font-semibold text-center w-24">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-lomba-daftar" class="divide-y"></tbody>
+        </table>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2" id="count-lomba-daftar"></p>
+    </div>
   </main>
 
   <!-- TOAST CONTAINER -->
@@ -376,6 +442,54 @@
     </div>
   </div>
 
+  <!-- MODAL LOMBA DAFTAR -->
+  <div id="modal-lomba-daftar" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+    <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="font-display font-bold text-base" id="modal-lomba-daftar-title">Tambah Pendaftaran</h3>
+        <button onclick="closeModal('modal-lomba-daftar')" class="text-gray-400 hover:text-gray-700 text-xl"><i class="ph ph-x"></i></button>
+      </div>
+      <form id="form-lomba-daftar" class="p-6 flex flex-col gap-4 overflow-y-auto">
+        <input type="hidden" id="ld-row" value="">
+        <div class="field">
+          <label class="block mb-1.5" for="ld-lomba">Lomba *</label>
+          <select id="ld-lomba" required onchange="onChangeLombaDaftar()" class="w-full p-2.5 rounded-md text-sm bg-white">
+            <option value="">-- Pilih Lomba --</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="ld-jenis">Jenis Lomba</label>
+          <input type="text" id="ld-jenis" class="w-full p-2.5 rounded-md text-sm bg-gray-50" placeholder="Terisi otomatis">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="ld-nama">Nama Peserta *</label>
+          <input type="text" id="ld-nama" required class="w-full p-2.5 rounded-md text-sm" placeholder="Nama lengkap peserta">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="ld-nip">NIP (opsional)</label>
+          <input type="text" id="ld-nip" class="w-full p-2.5 rounded-md text-sm" placeholder="Kosongkan jika mahasiswa/eksternal">
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="ld-peran">Peran</label>
+          <select id="ld-peran" class="w-full p-2.5 rounded-md text-sm bg-white">
+            <option value="Peserta">Peserta</option>
+            <option value="Ketua Tim">Ketua Tim</option>
+            <option value="Anggota">Anggota</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="block mb-1.5" for="ld-pj">PJ Lomba</label>
+          <input type="text" id="ld-pj" class="w-full p-2.5 rounded-md text-sm bg-gray-50" placeholder="Terisi otomatis">
+        </div>
+        <p class="text-xs text-gray-400 -mt-1">Untuk pendaftaran manual (mis. via panitia) atau revisi data, kode pendaftaran akan dibuat otomatis.</p>
+        <div class="mt-1 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-lomba-daftar')" class="px-4 py-2 rounded-md text-gray-600 text-sm font-medium hover:bg-gray-100">Batal</button>
+          <button type="submit" class="btn-primary px-4 py-2 rounded-md text-sm font-semibold">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- TOKEN ACCESS MODAL -->
   <div id="modal-token" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-[56] backdrop-blur-sm p-4">
     <div class="modal-panel bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
@@ -419,12 +533,14 @@
   // KONFIGURASI
   // ============================
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyGwd-rYy-da-b3MgopTB6McRhZb3DHMyNvUUVJ5aygYrYh4TRYSNdc5Rfpywdse2ynrg/exec";
+  const LOMBA_API_URL = "https://script.google.com/macros/s/AKfycbx8iEF4BnQ5RKew_DQEtftp-lDfS8aSBEkg1d3_VLKd7JK8Ja2hdtC33lguU3PXMLMw/exec";
 
   // ============================
   // STATE
   // ============================
   let panitiaData = [], jobdesData = [];
   let panitiaView = [], jobdesView = [];
+  let lombaList = [], logDaftarData = [], logDaftarView = [];
   let sortState = { panitia: { key: 'nama', dir: 1 }, jobdes: { key: null, dir: 1 } };
   let debounceTimer = null;
   let confirmResolver = null;
@@ -438,12 +554,18 @@
   function switchTab(tab){
     document.getElementById('view-panitia').classList.toggle('hidden', tab !== 'panitia');
     document.getElementById('view-jobdes').classList.toggle('hidden', tab !== 'jobdes');
+    document.getElementById('view-lomba').classList.toggle('hidden', tab !== 'lomba');
     document.getElementById('tab-panitia').classList.toggle('active', tab === 'panitia');
     document.getElementById('tab-jobdes').classList.toggle('active', tab === 'jobdes');
+    document.getElementById('tab-lomba').classList.toggle('active', tab === 'lomba');
     document.getElementById('tab-panitia-m').classList.toggle('active', tab === 'panitia');
     document.getElementById('tab-jobdes-m').classList.toggle('active', tab === 'jobdes');
-    document.getElementById('page-title').innerText = tab === 'panitia' ? 'Manajemen Data Panitia' : 'Manajemen Uraian Tugas';
-    document.getElementById('page-sub').innerText = tab === 'panitia' ? 'Kelola nama, jabatan, dan unit kerja panitia' : 'Kelola rincian tugas dan target tiap jabatan/seksi';
+    document.getElementById('tab-lomba-m').classList.toggle('active', tab === 'lomba');
+    const titles = { panitia: 'Manajemen Data Panitia', jobdes: 'Manajemen Uraian Tugas', lomba: 'Rekap Pendaftaran Lomba' };
+    const subs = { panitia: 'Kelola nama, jabatan, dan unit kerja panitia', jobdes: 'Kelola rincian tugas dan target tiap jabatan/seksi', lomba: 'Pantau, tambah, dan koreksi data pendaftaran lomba' };
+    document.getElementById('page-title').innerText = titles[tab];
+    document.getElementById('page-sub').innerText = subs[tab];
+    if (tab === 'lomba' && lombaList.length === 0 && logDaftarData.length === 0) loadLombaDaftar();
   }
 
   function openMobileMenu(){
@@ -555,6 +677,244 @@
       document.getElementById(id).innerHTML = jabatanSet.map(j => `<option value="${escapeAttr(j)}">`).join('');
     }
     document.getElementById('list-unit').innerHTML = unitSet.map(u => `<option value="${escapeAttr(u)}">`).join('');
+  }
+
+  // ============================
+  // LOMBA: FETCH DATA
+  // ============================
+  async function loadLombaDaftar(){
+    setStatus(true);
+    try {
+      const [resLomba, resLog] = await Promise.all([
+        fetch(`${LOMBA_API_URL}?action=get_lomba`),
+        fetch(`${LOMBA_API_URL}?action=get_log_daftar`)
+      ]);
+      const dataLomba = await resLomba.json();
+      const dataLog = await resLog.json();
+      if(dataLomba.error) throw new Error(dataLomba.error);
+      if(dataLog.error) throw new Error(dataLog.error);
+
+      lombaList = dataLomba.lomba || [];
+      logDaftarData = dataLog.logDaftar || [];
+
+      populateLombaSelect();
+      renderStatsLomba();
+      renderLombaCards();
+      filterLombaDaftar();
+      renderLombaDaftarTable();
+
+    } catch(e){
+      console.error("Gagal memuat data lomba:", e);
+      toast("Gagal memuat data lomba: " + e.message, 'error');
+    } finally {
+      setStatus(false);
+    }
+  }
+
+  function populateLombaSelect(){
+    const select = document.getElementById('ld-lomba');
+    const currentVal = select.value;
+    select.innerHTML = `<option value="">-- Pilih Lomba --</option>` +
+      lombaList.map((l, idx) => `<option value="${idx}">${escapeHtml(l.namaLomba)} (${escapeHtml(l.jenis)})</option>`).join('');
+    select.value = currentVal;
+  }
+
+  function parseJumlahLomba(str){
+    const s = String(str || "").trim();
+    const match = s.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  // ============================
+  // LOMBA: STATS & CARDS
+  // ============================
+  function renderStatsLomba(){
+    document.getElementById('stat-lomba-total').innerText = logDaftarData.length;
+    document.getElementById('stat-lomba-jumlah').innerText = lombaList.length;
+
+    let penuh = 0;
+    lombaList.forEach(l => {
+      const kuota = parseJumlahLomba(l.jumlahPeserta);
+      const terdaftar = logDaftarData.filter(d => normalize(d.namaLomba) === normalize(l.namaLomba)).length;
+      if(kuota && terdaftar >= kuota) penuh++;
+    });
+    document.getElementById('stat-lomba-penuh').innerText = penuh;
+  }
+
+  function normalize(str){ return String(str || '').trim().toLowerCase(); }
+
+  function renderLombaCards(){
+    const container = document.getElementById('lomba-cards');
+    document.getElementById('lomba-count-label').innerText = `${lombaList.length} lomba`;
+
+    if(lombaList.length === 0){
+      container.innerHTML = `<p class="text-sm text-gray-400 col-span-full">Belum ada data lomba. Pastikan sheet "lomba" sudah terisi.</p>`;
+      return;
+    }
+
+    container.innerHTML = lombaList.map(l => {
+      const peserta = logDaftarData.filter(d => normalize(d.namaLomba) === normalize(l.namaLomba));
+      const kuota = parseJumlahLomba(l.jumlahPeserta);
+      const penuh = kuota && peserta.length >= kuota;
+      const visible = peserta.slice(0, 4);
+      const rest = peserta.slice(4);
+      const cardId = 'lc-' + normalize(l.namaLomba).replace(/[^a-z0-9]/g, '');
+
+      const rows = (list) => list.map(p => `
+        <div class="member-row flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md hover:bg-gray-50">
+          <span class="text-sm text-gray-700 truncate">${escapeHtml(p.namaPeserta)} <span class="text-[10px] text-gray-400 uppercase">${escapeHtml(p.peran)}</span></span>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="editLombaDaftarByRow(${p.row})" class="text-gray-400 hover:text-[var(--navy-900)]" title="Edit"><i class="ph ph-pencil-simple text-sm"></i></button>
+            <button onclick="confirmDeleteLombaDaftar(${p.row}, '${escapeAttr(p.namaPeserta)}')" class="text-gray-400 hover:text-[var(--danger-600)]" title="Hapus"><i class="ph ph-trash text-sm"></i></button>
+          </div>
+        </div>`).join('');
+
+      const restBlock = rest.length > 0 ? `
+        <div class="member-list" id="member-list-${cardId}">
+          <div class="pt-1">${rows(rest)}</div>
+        </div>
+        <button onclick="toggleMemberList('${cardId}')" class="flex items-center gap-1 text-xs font-semibold mt-1.5 px-2.5" style="color:var(--navy-900);">
+          <span id="toggle-label-${cardId}">+${rest.length} peserta lainnya</span>
+          <i class="ph ph-caret-down toggle-caret text-xs" id="toggle-caret-${cardId}"></i>
+        </button>` : '';
+
+      return `
+        <div class="sie-card rounded-lg p-4">
+          <div class="flex items-start justify-between gap-2">
+            <h4 class="font-display font-bold text-sm leading-snug">${escapeHtml(l.namaLomba)}</h4>
+            <span class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full" style="background:${penuh ? 'var(--gold-100)' : 'var(--slate-100)'}; color:${penuh ? '#92700f' : 'var(--ink-600)'};">
+              ${peserta.length}${kuota ? ' / ' + kuota : ''}
+            </span>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(l.jenis)} &middot; PJ: ${escapeHtml(l.pj) || '-'}</p>
+          ${peserta.length > 0 ? `<div class="mt-3">${rows(visible)}</div>` : '<p class="text-xs text-gray-400 mt-3">Belum ada pendaftar.</p>'}
+          ${restBlock}
+          <button onclick="openModalLombaDaftar('${encodeURIComponent(l.namaLomba)}')" class="w-full mt-3 py-2 rounded-md border border-dashed text-xs font-semibold text-gray-500 hover:border-[var(--navy-900)] hover:text-[var(--navy-900)]">
+            <i class="ph ph-plus"></i> Tambah Peserta
+          </button>
+        </div>`;
+    }).join('');
+  }
+
+  // ============================
+  // LOMBA: FILTER & TABLE
+  // ============================
+  function filterLombaDaftar(){
+    const q = (document.getElementById('search-lomba-daftar').value || '').toLowerCase().trim();
+    logDaftarView = logDaftarData.filter(d => !q || [d.namaPeserta, d.namaLomba, d.nip].some(v => (v||'').toString().toLowerCase().includes(q)));
+  }
+
+  function renderLombaDaftarTable(){
+    const tbody = document.getElementById('tbody-lomba-daftar');
+    tbody.innerHTML = '';
+    document.getElementById('count-lomba-daftar').innerText = `Menampilkan ${logDaftarView.length} dari ${logDaftarData.length} pendaftaran`;
+
+    if(logDaftarView.length === 0){
+      tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center text-gray-400"><i class="ph ph-trophy text-2xl block mb-2"></i>Belum ada pendaftaran.</td></tr>`;
+      return;
+    }
+
+    logDaftarView.forEach((d, idx) => {
+      tbody.innerHTML += `
+        <tr class="hover:bg-gray-50 group">
+          <td class="p-3.5 text-center text-gray-400">${idx + 1}</td>
+          <td class="p-3.5 font-medium text-gray-800">${escapeHtml(d.namaLomba)}</td>
+          <td class="p-3.5">${escapeHtml(d.jenis)}</td>
+          <td class="p-3.5">${escapeHtml(d.namaPeserta)}</td>
+          <td class="p-3.5 text-gray-500">${escapeHtml(d.nip) || '-'}</td>
+          <td class="p-3.5">${escapeHtml(d.peran)}</td>
+          <td class="p-3.5 text-gray-500">${escapeHtml(d.pj) || '-'}</td>
+          <td class="p-3.5 text-center">
+            <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="editLombaDaftarByRow(${d.row})" class="text-[var(--navy-900)] hover:bg-gray-100 p-1.5 rounded" title="Edit"><i class="ph ph-pencil-simple text-base"></i></button>
+              <button onclick="confirmDeleteLombaDaftar(${d.row}, '${escapeAttr(d.namaPeserta)}')" class="text-[var(--danger-600)] hover:bg-red-50 p-1.5 rounded" title="Hapus"><i class="ph ph-trash text-base"></i></button>
+            </div>
+          </td>
+        </tr>`;
+    });
+  }
+
+  // ============================
+  // LOMBA: MODAL TAMBAH/EDIT
+  // ============================
+  function openModalLombaDaftar(prefillNamaLombaEncoded){
+    const prefillNamaLomba = prefillNamaLombaEncoded ? decodeURIComponent(prefillNamaLombaEncoded) : null;
+    document.getElementById('form-lomba-daftar').reset();
+    document.getElementById('ld-row').value = '';
+    document.getElementById('modal-lomba-daftar-title').innerText = 'Tambah Pendaftaran';
+    populateLombaSelect();
+
+    if(prefillNamaLomba){
+      const idx = lombaList.findIndex(l => l.namaLomba === prefillNamaLomba);
+      if(idx > -1){
+        document.getElementById('ld-lomba').value = idx;
+        onChangeLombaDaftar();
+      }
+    } else {
+      document.getElementById('ld-jenis').value = '';
+      document.getElementById('ld-pj').value = '';
+    }
+
+    openModal('modal-lomba-daftar');
+    setTimeout(() => document.getElementById('ld-nama').focus(), 50);
+  }
+
+  function onChangeLombaDaftar(){
+    const idx = document.getElementById('ld-lomba').value;
+    if(idx === ''){
+      document.getElementById('ld-jenis').value = '';
+      document.getElementById('ld-pj').value = '';
+      return;
+    }
+    const l = lombaList[idx];
+    document.getElementById('ld-jenis').value = l.jenis || '';
+    document.getElementById('ld-pj').value = l.pj || '';
+  }
+
+  function editLombaDaftarByRow(row){
+    const d = logDaftarData.find(x => x.row === row);
+    if(!d) return;
+    document.getElementById('form-lomba-daftar').reset();
+    document.getElementById('ld-row').value = d.row;
+    document.getElementById('modal-lomba-daftar-title').innerText = 'Edit Pendaftaran';
+    populateLombaSelect();
+
+    const idx = lombaList.findIndex(l => normalize(l.namaLomba) === normalize(d.namaLomba));
+    document.getElementById('ld-lomba').value = idx > -1 ? idx : '';
+    document.getElementById('ld-jenis').value = d.jenis || '';
+    document.getElementById('ld-nama').value = d.namaPeserta || '';
+    document.getElementById('ld-nip').value = d.nip || '';
+    document.getElementById('ld-peran').value = d.peran || 'Peserta';
+    document.getElementById('ld-pj').value = d.pj || '';
+
+    openModal('modal-lomba-daftar');
+    setTimeout(() => document.getElementById('ld-nama').focus(), 50);
+  }
+
+  document.getElementById('form-lomba-daftar').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if(!requireToken()) return;
+    const idx = document.getElementById('ld-lomba').value;
+    if(idx === '') return toast('Pilih lomba terlebih dahulu.', 'error');
+
+    const row = document.getElementById('ld-row').value;
+    const l = lombaList[idx];
+    const dataObj = {
+      row: row ? parseInt(row) : null,
+      namaLomba: l.namaLomba,
+      jenis: l.jenis,
+      namaPeserta: document.getElementById('ld-nama').value.trim(),
+      nip: document.getElementById('ld-nip').value.trim(),
+      peran: document.getElementById('ld-peran').value,
+      pj: l.pj || ''
+    };
+    closeModal('modal-lomba-daftar');
+    await sendApiRequest(row ? 'editLogDaftar' : 'addLogDaftar', dataObj, { url: LOMBA_API_URL, reload: loadLombaDaftar });
+  });
+
+  async function confirmDeleteLombaDaftar(row, nama){
+    const ok = await confirmDelete(`Hapus pendaftaran "${nama}"? Tindakan ini tidak dapat dibatalkan.`);
+    if(ok) await sendApiRequest('deleteLogDaftar', { row }, { url: LOMBA_API_URL, reload: loadLombaDaftar });
   }
 
   // ============================
@@ -828,11 +1188,13 @@
   // ============================
   // CRUD
   // ============================
-  async function sendApiRequest(action, dataObj){
+  async function sendApiRequest(action, dataObj, opts = {}){
+    const url = opts.url || GAS_API_URL;
+    const reloadFn = opts.reload || loadData;
     if(!requireToken()) return;
     setStatus(true);
     try {
-      const response = await fetch(GAS_API_URL, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action, token: authToken, data: dataObj })
@@ -840,7 +1202,7 @@
       const result = await response.json();
       if(result.success){
         toast(result.message || 'Berhasil disimpan');
-        await loadData();
+        await reloadFn();
       } else {
         toast(result.message || 'Gagal menyimpan data', 'error');
         if(result.invalidToken){
@@ -944,7 +1306,7 @@
   // Tutup modal dengan tombol Esc
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape'){
-      ['modal-panitia','modal-jobdes','modal-confirm','modal-token','modal-jobdes-view'].forEach(id => {
+      ['modal-panitia','modal-jobdes','modal-confirm','modal-token','modal-jobdes-view','modal-lomba-daftar'].forEach(id => {
         const el = document.getElementById(id);
         if(!el.classList.contains('hidden')) closeModal(id);
       });
