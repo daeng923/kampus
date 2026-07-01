@@ -336,7 +336,7 @@
 
       <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm min-w-[860px]">
+        <table class="w-full text-left border-collapse text-sm min-w-[980px]">
           <thead class="bg-gray-50 text-gray-500 border-b">
             <tr>
               <th class="p-3.5 font-semibold w-12 text-center">No</th>
@@ -347,6 +347,7 @@
               <th class="p-3.5 font-semibold whitespace-nowrap">NIP</th>
               <th class="p-3.5 font-semibold whitespace-nowrap">Peran</th>
               <th class="p-3.5 font-semibold whitespace-nowrap">PJ Lomba</th>
+              <th class="p-3.5 font-semibold whitespace-nowrap">Validasi / Lampiran</th>
               <th class="p-3.5 font-semibold text-center w-24">Aksi</th>
             </tr>
           </thead>
@@ -490,6 +491,34 @@
           <label class="block mb-1.5" for="ld-pj">PJ Lomba</label>
           <input type="text" id="ld-pj" class="w-full p-2.5 rounded-md text-sm bg-gray-50" placeholder="Terisi otomatis">
         </div>
+
+        <div id="ld-lampiran-wrap" class="hidden flex flex-col gap-4 pt-1 border-t border-dashed">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide -mb-1 mt-3">Lampiran &amp; Validasi</p>
+          <div class="field">
+            <label class="block mb-1.5" for="ld-link-foto">Link Foto/Dokumentasi</label>
+            <input type="url" id="ld-link-foto" class="w-full p-2.5 rounded-md text-sm" placeholder="https://drive.google.com/...">
+          </div>
+          <div class="field">
+            <label class="block mb-1.5" for="ld-kategori-konten">Kategori Konten</label>
+            <input type="text" id="ld-kategori-konten" class="w-full p-2.5 rounded-md text-sm" placeholder="mis. Pelayanan Prima, SOP, Teamwork">
+          </div>
+          <div class="field">
+            <label class="block mb-1.5" for="ld-status-validasi">Status Validasi</label>
+            <select id="ld-status-validasi" class="w-full p-2.5 rounded-md text-sm bg-white">
+              <option value="">-</option>
+              <option value="Menunggu Validasi">Menunggu Validasi</option>
+              <option value="Valid - Menunggu Cek Lapangan">Valid - Menunggu Cek Lapangan</option>
+              <option value="Tidak Valid">Tidak Valid</option>
+              <option value="Sesuai (Lolos Cek Lapangan)">Sesuai (Lolos Cek Lapangan)</option>
+              <option value="Tidak Sesuai (Gagal Cek Lapangan)">Tidak Sesuai (Gagal Cek Lapangan)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="block mb-1.5" for="ld-catatan">Catatan Panitia</label>
+            <textarea id="ld-catatan" rows="2" class="w-full p-2.5 rounded-md text-sm" placeholder="Catatan hasil validasi/cek lapangan..."></textarea>
+          </div>
+        </div>
+
         <p class="text-xs text-gray-400 -mt-1">Untuk pendaftaran manual (mis. via panitia) atau revisi data, kode pendaftaran tim baru akan dibuat otomatis.</p>
         <div class="mt-1 flex justify-end gap-2">
           <button type="button" onclick="closeModal('modal-lomba-daftar')" class="px-4 py-2 rounded-md text-gray-600 text-sm font-medium hover:bg-gray-100">Batal</button>
@@ -736,6 +765,18 @@
 
   function normalize(str){ return String(str || '').trim().toLowerCase(); }
 
+  function statusValidasiBadgeHtml(status){
+    const palette = {
+      'Menunggu Validasi': { bg: 'var(--slate-100)', color: 'var(--ink-600)' },
+      'Valid - Menunggu Cek Lapangan': { bg: 'var(--gold-100)', color: '#92700f' },
+      'Tidak Valid': { bg: 'var(--danger-50)', color: 'var(--danger-600)' },
+      'Sesuai (Lolos Cek Lapangan)': { bg: 'var(--emerald-50)', color: 'var(--emerald-600)' },
+      'Tidak Sesuai (Gagal Cek Lapangan)': { bg: 'var(--danger-50)', color: 'var(--danger-600)' }
+    };
+    const style = palette[status] || { bg: 'var(--slate-100)', color: 'var(--ink-600)' };
+    return `<span class="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-1" style="background:${style.bg}; color:${style.color};">${escapeHtml(status)}</span>`;
+  }
+
   // Kelompokkan baris log_daftar milik satu lomba menjadi entri-entri (tim/individu),
   // dikelompokkan berdasarkan Kode Pendaftaran, supaya beberapa tim/individu berbeda
   // yang mendaftar lomba yang sama tidak tercampur jadi satu daftar besar.
@@ -790,6 +831,9 @@
       const entryBlock = (entry, idx) => {
         const jumlah = entry.anggota.length;
         const lengkap = kuota ? jumlah >= kuota : null;
+        const rep = entry.anggota[0]; // data lampiran/status disalin sama di semua baris satu entri
+        const statusBadge = rep.statusValidasi ? statusValidasiBadgeHtml(rep.statusValidasi) : '';
+        const lampiranLink = rep.linkFoto ? `<a href="${escapeAttr(rep.linkFoto)}" target="_blank" class="text-[10px] font-bold flex items-center gap-1 mt-1" style="color:var(--navy-900);"><i class="ph ph-image"></i> Lihat Lampiran</a>` : '';
         return `
           <div class="mt-2.5 pt-2.5 border-t border-gray-100 first:mt-2 first:pt-0 first:border-0">
             <div class="flex items-center justify-between mb-1">
@@ -798,6 +842,8 @@
                 ${jumlah}${kuota ? ' / ' + kuota : ''}
               </span>
             </div>
+            ${statusBadge}
+            ${lampiranLink}
             ${memberRows(entry.anggota)}
           </div>`;
       };
@@ -850,11 +896,15 @@
     document.getElementById('count-lomba-daftar').innerText = `Menampilkan ${logDaftarView.length} dari ${logDaftarData.length} pendaftaran`;
 
     if(logDaftarView.length === 0){
-      tbody.innerHTML = `<tr><td colspan="9" class="p-10 text-center text-gray-400"><i class="ph ph-trophy text-2xl block mb-2"></i>Belum ada pendaftaran.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" class="p-10 text-center text-gray-400"><i class="ph ph-trophy text-2xl block mb-2"></i>Belum ada pendaftaran.</td></tr>`;
       return;
     }
 
     logDaftarView.forEach((d, idx) => {
+      const validasiCell = d.statusValidasi || d.linkFoto
+        ? `${d.statusValidasi ? statusValidasiBadgeHtml(d.statusValidasi) : ''}${d.linkFoto ? `<a href="${escapeAttr(d.linkFoto)}" target="_blank" class="text-[11px] font-semibold flex items-center gap-1" style="color:var(--navy-900);"><i class="ph ph-image"></i> Lampiran</a>` : ''}`
+        : '<span class="text-gray-300 text-xs">-</span>';
+
       tbody.innerHTML += `
         <tr class="hover:bg-gray-50 group">
           <td class="p-3.5 text-center text-gray-400">${idx + 1}</td>
@@ -865,6 +915,7 @@
           <td class="p-3.5 text-gray-500">${escapeHtml(d.nip) || '-'}</td>
           <td class="p-3.5">${escapeHtml(d.peran)}</td>
           <td class="p-3.5 text-gray-500">${escapeHtml(d.pj) || '-'}</td>
+          <td class="p-3.5">${validasiCell}</td>
           <td class="p-3.5 text-center">
             <div class="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onclick="editLombaDaftarByRow(${d.row})" class="text-[var(--navy-900)] hover:bg-gray-100 p-1.5 rounded" title="Edit"><i class="ph ph-pencil-simple text-base"></i></button>
@@ -885,6 +936,7 @@
     document.getElementById('ld-kode').value = '';
     document.getElementById('modal-lomba-daftar-title').innerText = 'Tambah Pendaftaran';
     document.getElementById('ld-entri-wrap').classList.remove('hidden');
+    document.getElementById('ld-lampiran-wrap').classList.add('hidden');
     populateLombaSelect();
 
     if(prefillNamaLomba){
@@ -909,11 +961,16 @@
     if(idx === ''){
       document.getElementById('ld-jenis').value = '';
       document.getElementById('ld-pj').value = '';
+      document.getElementById('ld-lampiran-wrap').classList.add('hidden');
       return;
     }
     const l = lombaList[idx];
     document.getElementById('ld-jenis').value = l.jenis || '';
     document.getElementById('ld-pj').value = l.pj || '';
+    document.getElementById('ld-lampiran-wrap').classList.toggle('hidden', !l.butuhLampiran);
+    if(l.butuhLampiran && !document.getElementById('ld-status-validasi').value){
+      document.getElementById('ld-status-validasi').value = 'Menunggu Validasi';
+    }
   }
 
   // Isi dropdown "Gabung ke Tim/Individu" berdasarkan entri (kode pendaftaran) yang sudah ada untuk lomba terpilih
@@ -968,6 +1025,14 @@
     document.getElementById('ld-peran').value = d.peran || 'Peserta';
     document.getElementById('ld-pj').value = d.pj || '';
 
+    const butuhLampiran = idx > -1 && lombaList[idx].butuhLampiran;
+    const adaLampiranData = !!(d.linkFoto || d.kategoriKonten || d.statusValidasi || d.catatan);
+    document.getElementById('ld-lampiran-wrap').classList.toggle('hidden', !(butuhLampiran || adaLampiranData));
+    document.getElementById('ld-link-foto').value = d.linkFoto || '';
+    document.getElementById('ld-kategori-konten').value = d.kategoriKonten || '';
+    document.getElementById('ld-status-validasi').value = d.statusValidasi || '';
+    document.getElementById('ld-catatan').value = d.catatan || '';
+
     openModal('modal-lomba-daftar');
     setTimeout(() => document.getElementById('ld-nama').focus(), 50);
   }
@@ -988,7 +1053,11 @@
       namaPeserta: document.getElementById('ld-nama').value.trim(),
       nip: document.getElementById('ld-nip').value.trim(),
       peran: document.getElementById('ld-peran').value,
-      pj: l.pj || ''
+      pj: l.pj || '',
+      linkFoto: document.getElementById('ld-link-foto').value.trim(),
+      kategoriKonten: document.getElementById('ld-kategori-konten').value.trim(),
+      statusValidasi: document.getElementById('ld-status-validasi').value,
+      catatan: document.getElementById('ld-catatan').value.trim()
     };
     closeModal('modal-lomba-daftar');
     await sendApiRequest(row ? 'editLogDaftar' : 'addLogDaftar', dataObj, { url: LOMBA_API_URL, reload: loadLombaDaftar });
