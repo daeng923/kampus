@@ -335,8 +335,9 @@
                     { key: "Tugas Pokok", label: "Tugas Pokok" },
                     { key: "Keterangan Lain", label: "Keterangan lain-lain" }
                 ];
-                const excludeKeys = ["Nomor Surat", "Judul Surat", "Tanggal Surat", "Nama Rektor", "Jabatan TTD", "Tugas Mulai", "Tugas Selesai", "Tembusan", "Judul Seksi", "Keterangan Lampiran"];
+                const excludeKeys = ["Nomor Surat", "Judul Surat", "Tanggal Surat", "Nama Rektor", "Jabatan TTD", "Tugas Mulai", "Tugas Selesai", "Tembusan", "Judul Seksi", "Keterangan Lampiran", "Token", "TOKEN", "Token Akses", "Password", "Secret"];
                 templateFields.forEach(f => excludeKeys.push(f.key)); 
+                const excludeKeysLower = excludeKeys.map(k => k.toLowerCase());
                 const rowsToRender = [];
                 templateFields.forEach(field => {
                     if (field.key === "SPECIAL_NAMA") rowsToRender.push({ label: field.label, val: `Terlampir` });
@@ -354,7 +355,7 @@
                     }
                 });
                 for (let key in result.config) {
-                    if (!excludeKeys.includes(key) && result.config[key] !== "") rowsToRender.push({ label: key, val: result.config[key] });
+                    if (!excludeKeysLower.includes(key.toLowerCase()) && result.config[key] !== "") rowsToRender.push({ label: key, val: result.config[key] });
                 }
 
                 let nomorUrut = 1;
