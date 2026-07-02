@@ -400,15 +400,14 @@
                 let currentContainer = containerPart1;
 
                 // Kata Kunci Pemisah untuk pindah ke halaman 3 (Lampiran Lanjutan)
-                // "paduan suara" dihapus dari daftar agar tetap di halaman 2
-                // "paskibra", "paskibraka", "pasukan pengibar bendera" dimasukkan untuk dipisah ke halaman 3
-                const keywordsSplitPage3 = ["konsumsi", "paskibra", "paskibraka", "pasukan pengibar bendera", "korsik", "keamanan"];
+                const includesKeywords = ["konsumsi", "paskibra", "paskibraka", "korsik", "keamanan"];
+                const exactMatchKeywords = ["pasukan pengibar bendera"]; // Hanya pindah jika namanya SAMA PERSIS
 
                 for (let group of groupedPanitia) {
                     
                     // Cek jika nama seksi/jabatan mengandung kata kunci untuk pindah halaman
                     const groupTitle = group.jabatanSeksi.toLowerCase();
-                    const shouldSplit = keywordsSplitPage3.some(keyword => groupTitle.includes(keyword));
+                    const shouldSplit = includesKeywords.some(keyword => groupTitle.includes(keyword)) || exactMatchKeywords.includes(groupTitle);
                     
                     if (shouldSplit) {
                         currentContainer = containerPart2;
