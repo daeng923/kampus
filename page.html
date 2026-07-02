@@ -102,9 +102,17 @@
       <button onclick="openTokenModal()" id="token-status-btn" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
         <i class="ph ph-key text-sm" id="token-status-icon"></i> <span id="token-status-text">Atur Token Akses</span>
       </button>
-      <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
-        <i class="ph ph-printer"></i> Buka Hal. Cetak
-      </a>
+      
+      <!-- MENU CETAK SURAT -->
+      <div class="mt-2 flex flex-col gap-1.5">
+        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide px-1">Cetak Surat Tugas</p>
+        <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors text-white">
+          <i class="ph ph-printer"></i> SK Panitia Utama
+        </a>
+        <a href="petugas.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-[#c79a2b]/30 text-xs font-medium hover:bg-[#c79a2b]/10 transition-colors" style="color: var(--gold-400);">
+          <i class="ph ph-printer"></i> SK Petugas Upacara
+        </a>
+      </div>
     </div>
   </aside>
 
@@ -134,9 +142,17 @@
         <button onclick="closeMobileMenu(); openTokenModal();" id="token-status-btn-m" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
           <i class="ph ph-key text-sm" id="token-status-icon-m"></i> <span id="token-status-text-m">Atur Token Akses</span>
         </button>
-        <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors">
-          <i class="ph ph-printer"></i> Buka Hal. Cetak
-        </a>
+        
+        <!-- MENU CETAK SURAT -->
+        <div class="mt-2 flex flex-col gap-1.5">
+          <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wide px-1">Cetak Surat Tugas</p>
+          <a href="index.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-white/15 text-xs font-medium hover:bg-white/5 transition-colors text-white">
+            <i class="ph ph-printer"></i> SK Panitia Utama
+          </a>
+          <a href="petugas.html" target="_blank" class="flex items-center justify-center gap-2 w-full p-2 rounded border border-[#c79a2b]/30 text-xs font-medium hover:bg-[#c79a2b]/10 transition-colors" style="color: var(--gold-400);">
+            <i class="ph ph-printer"></i> SK Petugas Upacara
+          </a>
+        </div>
       </div>
     </aside>
   </div>
@@ -1257,8 +1273,6 @@
     const count = list.querySelectorAll('.member-row').length;
     label.innerText = isOpen ? 'Sembunyikan' : `+${count} anggota lainnya`;
   }
-
-
 
   function getMissingJobdesList(){
     const seksiSet = new Set(panitiaData.filter(p => p.kategori === 'Seksi').map(p => (p.jabatanSeksi||'').trim()));
