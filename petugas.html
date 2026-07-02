@@ -237,7 +237,8 @@
     <!-- ENGINE API FETCH JS -->
     <script>
         // Endpoint Google Apps Script yang diberikan
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBkOHt3Sx-fx9W7bvrwK4xTzRL0MLkJcMJxgznpyIOMJgCazzvIjrOqvwG4CHi4STN/exec";
+        // Tambahkan parameter ?jenis=upacara untuk menarik sheet Config2 & petugas
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBkOHt3Sx-fx9W7bvrwK4xTzRL0MLkJcMJxgznpyIOMJgCazzvIjrOqvwG4CHi4STN/exec?jenis=upacara";
 
         function formatTanggalIndo(dateStr) {
             if (!dateStr) return "-";
