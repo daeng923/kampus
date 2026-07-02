@@ -206,7 +206,7 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- HALAMAN 3: LAMPIRAN LANJUTAN (KONSUMSI / PADUAN SUARA DST) -->
+        <!-- HALAMAN 3: LAMPIRAN LANJUTAN (KONSUMSI / PASUKAN PENGIBAR BENDERA DST) -->
         <!-- ============================================== -->
         <div id="page-lampiran-2" class="page-paper hidden mx-auto relative page-break">
             <img src="https://lh3.googleusercontent.com/d/1qOTIpvS7rgIgDkMPuj1IErlmcefb6xyv" class="watermark-lampiran" alt="Watermark Lampiran">
@@ -400,8 +400,9 @@
                 let currentContainer = containerPart1;
 
                 // Kata Kunci Pemisah untuk pindah ke halaman 3 (Lampiran Lanjutan)
-                // Sangat berguna untuk kelompok upacara yang jumlah pesertanya banyak
-                const keywordsSplitPage3 = ["konsumsi", "paduan suara", "paskibra", "paskibraka", "korsik", "keamanan"];
+                // "paduan suara" dihapus dari daftar agar tetap di halaman 2
+                // "paskibra", "paskibraka", "pasukan pengibar bendera" dimasukkan untuk dipisah ke halaman 3
+                const keywordsSplitPage3 = ["konsumsi", "paskibra", "paskibraka", "pasukan pengibar bendera", "korsik", "keamanan"];
 
                 for (let group of groupedPanitia) {
                     
