@@ -237,7 +237,7 @@
     <!-- ENGINE API FETCH JS -->
     <script>
         // Endpoint Google Apps Script yang diberikan
-        // Tambahkan parameter ?jenis=upacara untuk menarik sheet Config2 & petugas
+        // URL INI MENGGUNAKAN PARAMETER ?jenis=upacara UNTUK MENGAMBIL DATA KHUSUS UPACARA
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBkOHt3Sx-fx9W7bvrwK4xTzRL0MLkJcMJxgznpyIOMJgCazzvIjrOqvwG4CHi4STN/exec?jenis=upacara";
 
         function formatTanggalIndo(dateStr) {
@@ -417,7 +417,7 @@
                         isSeksiStarted = true;
                         const headerJudul = document.createElement("div");
                         headerJudul.className = "w-full font-bold mt-2 mb-2 text-[11.5pt]";
-                        headerJudul.innerText = safeGet("Judul Seksi") || "Koordinator Seksi:";
+                        headerJudul.innerText = safeGet("Judul Seksi") || "Kesatuan Upacara:"; // Mengubah teks default menjadi Kesatuan Upacara
                         currentContainer.appendChild(headerJudul);
                     }
 
@@ -428,7 +428,8 @@
                     }
 
                     let membersHtml = group.members.map((m, idx) => {
-                        let isKoord = (idx === 0 && group.kategori.toLowerCase() === "seksi" && group.members.length > 1) ? " (Koord.)" : "";
+                        // LOGIKA "(Koord.)" DIHAPUS SEPENUHNYA UNTUK FILE INI
+                        // Jadi tidak ada tambahan kata koordinator pada baris pertama nama petugas.
                         let prefix = group.members.length > 1 ? `${idx + 1}. ` : "";
                         let spacingClass = idx < group.members.length - 1 ? 'mb-1' : '';
                         let unitTextRaw = m.namaUnit ? m.namaUnit.trim() : "";
@@ -436,7 +437,7 @@
                         
                         return `
                             <div class="flex w-full ${spacingClass}">
-                                <div class="w-[65%] pr-4 whitespace-nowrap">${prefix}${m.nama}${isKoord}</div>
+                                <div class="w-[65%] pr-4 whitespace-nowrap">${prefix}${m.nama}</div>
                                 <div class="w-[35%] text-gray-800 whitespace-nowrap">${unitDisplay}</div>
                             </div>
                         `;
